@@ -9,7 +9,6 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
   <style>
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
-
     :root {
       --bg:      #0d1117;
       --bg-card: #161b27;
@@ -23,138 +22,48 @@
       --blue:    #4f8ef7;
       --blue2:   #7eb3ff;
       --green:   #10b981;
-      --green2:  #34d399;
       --purple:  #8b5cf6;
       --amber:   #f59e0b;
       --red:     #ef4444;
       --cyan:    #06b6d4;
       --pink:    #ec4899;
     }
-
-    body {
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-      background: var(--bg); color: var(--txt);
-      min-height: 100vh; padding: 28px 32px;
-    }
-
-    /* SETUP SCREEN */
-    #setup {
-      display: none; position: fixed; inset: 0;
-      background: var(--bg); z-index: 900;
-      align-items: center; justify-content: center;
-    }
-    .setup-box {
-      background: var(--bg-card); border: 1px solid var(--brd2);
-      border-radius: 18px; padding: 36px 40px; width: 440px;
-      max-width: 95vw;
-    }
-    .setup-icon {
-      width: 50px; height: 50px;
-      background: linear-gradient(135deg, var(--blue), var(--purple));
-      border-radius: 14px; display: flex; align-items: center;
-      justify-content: center; font-size: 24px; margin-bottom: 20px;
-      box-shadow: 0 4px 20px rgba(79,142,247,.3);
-    }
-    .setup-box h2 { font-size: 20px; margin-bottom: 6px; }
-    .setup-box p  { font-size: 13px; color: var(--txt2); margin-bottom: 24px; line-height: 1.6; }
-    .setup-field  { margin-bottom: 16px; }
-    .setup-field label { display: block; font-size: 12px; font-weight: 600; color: var(--txt2); text-transform: uppercase; letter-spacing: .6px; margin-bottom: 6px; }
-    .setup-field input {
-      width: 100%; background: var(--bg-inp); border: 1px solid var(--brd);
-      color: var(--txt); padding: 11px 14px; border-radius: 9px;
-      font-size: 13px; font-family: inherit;
-    }
-    .setup-field input:focus { outline: none; border-color: var(--blue); }
-    .btn-primary {
-      width: 100%; background: var(--blue); border: none; color: #fff;
-      padding: 13px; border-radius: 10px; font-size: 14px; font-weight: 600;
-      cursor: pointer; font-family: inherit; margin-top: 4px;
-      transition: opacity .15s;
-    }
-    .btn-primary:hover { opacity: .88; }
-    .setup-error { font-size: 12px; color: var(--red); margin-top: 10px; display: none; }
+    body { font-family: 'Inter', -apple-system, sans-serif; background: var(--bg); color: var(--txt); min-height: 100vh; padding: 28px 32px; }
 
     /* LOADING */
-    #loading {
-      position: fixed; inset: 0; background: var(--bg); z-index: 800;
-      display: flex; flex-direction: column; align-items: center;
-      justify-content: center; gap: 16px;
-    }
-    .spinner {
-      width: 42px; height: 42px; border: 3px solid var(--brd);
-      border-top-color: var(--blue); border-radius: 50%;
-      animation: spin .8s linear infinite;
-    }
+    #loading { position: fixed; inset: 0; background: var(--bg); z-index: 800; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; }
+    .spinner { width: 42px; height: 42px; border: 3px solid var(--brd); border-top-color: var(--blue); border-radius: 50%; animation: spin .8s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
     #loading-txt { font-size: 14px; color: var(--txt2); }
 
     /* HEADER */
-    .header {
-      display: flex; align-items: center; justify-content: space-between;
-      margin-bottom: 28px; flex-wrap: wrap; gap: 14px;
-    }
+    .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 28px; flex-wrap: wrap; gap: 14px; }
     .header-left { display: flex; align-items: center; gap: 14px; }
-    .header-icon {
-      width: 44px; height: 44px;
-      background: linear-gradient(135deg, var(--blue) 0%, var(--purple) 100%);
-      border-radius: 12px; display: flex; align-items: center;
-      justify-content: center; font-size: 20px;
-      box-shadow: 0 4px 16px rgba(79,142,247,.3);
-    }
-    .h-title  { font-size: 20px; font-weight: 700; letter-spacing: -.3px; }
-    .h-sub    { font-size: 13px; color: var(--txt2); margin-top: 3px; }
-    .status-chip {
-      display: flex; align-items: center; gap: 7px; font-size: 12px;
-      color: var(--txt2); background: var(--bg-card); border: 1px solid var(--brd);
-      padding: 7px 14px; border-radius: 20px;
-    }
-    .status-chip button {
-      background: none; border: none; color: var(--txt3); cursor: pointer;
-      font-size: 11px; padding: 0 0 0 4px; font-family: inherit;
-      transition: color .15s;
-    }
-    .status-chip button:hover { color: var(--txt2); }
+    .header-icon { width: 44px; height: 44px; background: linear-gradient(135deg, var(--blue), var(--purple)); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px; box-shadow: 0 4px 16px rgba(79,142,247,.3); }
+    .h-title { font-size: 20px; font-weight: 700; letter-spacing: -.3px; }
+    .h-sub { font-size: 13px; color: var(--txt2); margin-top: 3px; }
+    .status-chip { display: flex; align-items: center; gap: 7px; font-size: 12px; color: var(--txt2); background: var(--bg-card); border: 1px solid var(--brd); padding: 7px 14px; border-radius: 20px; }
     .sdot { width: 7px; height: 7px; background: var(--green); border-radius: 50%; animation: blink 2s ease-in-out infinite; }
     @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
 
     /* FILTERS */
-    .filters {
-      background: var(--bg-card); border: 1px solid var(--brd); border-radius: 14px;
-      padding: 14px 20px; margin-bottom: 18px;
-      display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
-    }
+    .filters { background: var(--bg-card); border: 1px solid var(--brd); border-radius: 14px; padding: 14px 20px; margin-bottom: 18px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
     .filter-lbl { font-size: 12px; color: var(--txt2); font-weight: 500; margin-right: 4px; }
-    .pbtn {
-      background: transparent; border: 1px solid var(--brd); color: var(--txt2);
-      padding: 7px 15px; border-radius: 8px; font-size: 13px; cursor: pointer;
-      transition: all .15s; font-family: inherit;
-    }
+    .pbtn { background: transparent; border: 1px solid var(--brd); color: var(--txt2); padding: 7px 15px; border-radius: 8px; font-size: 13px; cursor: pointer; transition: all .15s; font-family: inherit; }
     .pbtn:hover { border-color: var(--blue); color: var(--txt); }
     .pbtn.on { background: var(--blue); border-color: var(--blue); color: #fff; font-weight: 500; }
     .custom-dates { display: none; align-items: center; gap: 8px; }
-    .date-inp {
-      background: var(--bg-inp); border: 1px solid var(--brd); color: var(--txt);
-      padding: 7px 12px; border-radius: 8px; font-size: 13px; font-family: inherit;
-    }
+    .date-inp { background: var(--bg-inp); border: 1px solid var(--brd); color: var(--txt); padding: 7px 12px; border-radius: 8px; font-size: 13px; font-family: inherit; }
     .date-inp:focus { outline: none; border-color: var(--blue); }
-    .sep { color: var(--txt2); font-size: 13px; }
 
     /* BUDGET */
-    .budget {
-      background: var(--bg-card); border: 1px solid var(--brd);
-      border-radius: 14px; padding: 22px 26px; margin-bottom: 18px;
-    }
+    .budget { background: var(--bg-card); border: 1px solid var(--brd); border-radius: 14px; padding: 22px 26px; margin-bottom: 18px; }
     .budget-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 16px; }
     .b-tag { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .8px; color: var(--txt2); margin-bottom: 8px; }
     .b-amounts { display: flex; align-items: baseline; gap: 8px; }
     .b-spent { font-size: 30px; font-weight: 700; letter-spacing: -.5px; }
-    .b-of    { font-size: 14px; color: var(--txt2); }
-    .edit-btn {
-      background: transparent; border: 1px solid var(--brd); color: var(--txt2);
-      width: 34px; height: 34px; border-radius: 8px; cursor: pointer;
-      font-size: 15px; display: flex; align-items: center; justify-content: center;
-      transition: all .15s; flex-shrink: 0; margin-top: 4px;
-    }
+    .b-of { font-size: 14px; color: var(--txt2); }
+    .edit-btn { background: transparent; border: 1px solid var(--brd); color: var(--txt2); width: 34px; height: 34px; border-radius: 8px; cursor: pointer; font-size: 15px; display: flex; align-items: center; justify-content: center; transition: all .15s; }
     .edit-btn:hover { border-color: var(--blue); color: var(--blue); }
     .bar-wrap { position: relative; height: 10px; background: var(--bg-inp); border-radius: 6px; overflow: visible; }
     .bar-spent { height: 100%; background: linear-gradient(90deg, var(--blue), var(--blue2)); border-radius: 6px; transition: width .5s ease; }
@@ -166,17 +75,9 @@
 
     /* CARDS */
     .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(185px, 1fr)); gap: 14px; margin-bottom: 18px; }
-    .card {
-      background: var(--bg-card); border: 1px solid var(--brd); border-radius: 14px;
-      padding: 20px 22px; position: relative; overflow: hidden;
-      transition: transform .2s, box-shadow .2s, border-color .2s;
-    }
+    .card { background: var(--bg-card); border: 1px solid var(--brd); border-radius: 14px; padding: 20px 22px; position: relative; overflow: hidden; transition: transform .2s, box-shadow .2s, border-color .2s; }
     .card:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(0,0,0,.35); border-color: var(--brd2); }
-    .card::after {
-      content:''; position: absolute; top:0; left:0; right:0; height:2px;
-      background: linear-gradient(90deg, var(--blue), var(--purple));
-      opacity:0; transition: opacity .2s;
-    }
+    .card::after { content:''; position: absolute; top:0; left:0; right:0; height:2px; background: linear-gradient(90deg, var(--blue), var(--purple)); opacity:0; transition: opacity .2s; }
     .card:hover::after { opacity: 1; }
     .c-lbl { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .7px; color: var(--txt2); margin-bottom: 12px; }
     .c-val { font-size: 26px; font-weight: 700; letter-spacing: -.5px; line-height: 1; margin-bottom: 5px; }
@@ -188,11 +89,7 @@
     .sec-head h2 { font-size: 15px; font-weight: 600; }
     .sec-sub2 { font-size: 12px; color: var(--txt2); margin-top: 3px; }
     .toggles { display: flex; gap: 6px; flex-wrap: wrap; }
-    .mt {
-      display: flex; align-items: center; gap: 6px; padding: 6px 12px;
-      border-radius: 20px; border: 1px solid var(--brd); background: transparent;
-      color: var(--txt2); font-size: 12px; cursor: pointer; transition: all .15s; font-family: inherit;
-    }
+    .mt { display: flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 20px; border: 1px solid var(--brd); background: transparent; color: var(--txt2); font-size: 12px; cursor: pointer; transition: all .15s; font-family: inherit; }
     .mt .dot { width: 8px; height: 8px; border-radius: 50%; }
     .mt.on { background: rgba(79,142,247,.1); border-color: var(--blue); color: var(--txt); }
     .chart-wrap { position: relative; height: 290px; }
@@ -209,7 +106,6 @@
     .ch-badge { display: inline-flex; align-items: center; gap: 7px; padding: 4px 11px; border-radius: 7px; font-size: 12px; font-weight: 500; }
     .ch-google { background: rgba(79,142,247,.1); color: var(--blue2); border: 1px solid rgba(79,142,247,.2); }
     .totals-row td { font-weight: 600; background: rgba(79,142,247,.04); }
-    .empty-row td { text-align: center; padding: 48px; color: var(--txt2); }
 
     /* BUDGET MODAL */
     .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,.65); display: none; align-items: center; justify-content: center; z-index: 200; }
@@ -221,55 +117,16 @@
     .btn-cancel { background: transparent; border: 1px solid var(--brd); color: var(--txt2); padding: 9px 18px; border-radius: 9px; cursor: pointer; font-family: inherit; font-size: 13px; }
     .btn-save { background: var(--blue); border: none; color: #fff; padding: 9px 18px; border-radius: 9px; cursor: pointer; font-family: inherit; font-size: 13px; font-weight: 600; }
 
-    /* RESPONSIVE */
-    @media (max-width: 900px) { body { padding: 18px; } }
-    @media (max-width: 600px) {
-      body { padding: 14px; }
-      .cards { grid-template-columns: repeat(2, 1fr); }
-      .b-spent { font-size: 24px; }
-    }
+    @media (max-width: 600px) { body { padding: 14px; } .cards { grid-template-columns: repeat(2, 1fr); } .b-spent { font-size: 24px; } }
   </style>
 </head>
 <body>
 
-<!-- SETUP SCREEN -->
-<div id="setup" style="display:none">
-  <div class="setup-box">
-    <div class="setup-icon">📊</div>
-    <h2>Conectar Google Sheets</h2>
-    <p>Introduce las credenciales de la API de Google para cargar los datos del dashboard. Se guardarán en este navegador.</p>
-    <div class="setup-field">
-      <label>Client ID</label>
-      <input id="s-cid" type="text" placeholder="946654...apps.googleusercontent.com" />
-    </div>
-    <div class="setup-field">
-      <label>Client Secret</label>
-      <input id="s-csec" type="password" placeholder="GOCSPX-..." />
-    </div>
-    <div class="setup-field">
-      <label>Refresh Token</label>
-      <input id="s-rt" type="password" placeholder="1//01..." />
-    </div>
-    <div class="setup-field">
-      <label>Sheet ID</label>
-      <input id="s-sid" type="text" placeholder="1UVZk1102h-..." />
-    </div>
-    <div class="setup-field">
-      <label>Nombre de la pestaña</label>
-      <input id="s-sname" type="text" placeholder="BJ BASCULAS" />
-    </div>
-    <button class="btn-primary" onclick="saveSetup()">Guardar y conectar</button>
-    <div class="setup-error" id="setup-error">Verifica las credenciales e intenta de nuevo.</div>
-  </div>
-</div>
-
-<!-- LOADING -->
 <div id="loading">
   <div class="spinner"></div>
-  <div id="loading-txt">Iniciando...</div>
+  <div id="loading-txt">Cargando datos...</div>
 </div>
 
-<!-- BUDGET MODAL -->
 <div class="modal-bg" id="modalBg">
   <div class="modal-box">
     <h3>Editar presupuesto mensual</h3>
@@ -281,10 +138,8 @@
   </div>
 </div>
 
-<!-- DASHBOARD -->
 <div id="dashboard" style="display:none">
 
-  <!-- Header -->
   <div class="header">
     <div class="header-left">
       <div class="header-icon">📊</div>
@@ -296,11 +151,9 @@
     <div class="status-chip">
       <div class="sdot"></div>
       <span id="lastUpdate">Cargando...</span>
-      <button onclick="showSetup()" title="Cambiar credenciales">⚙</button>
     </div>
   </div>
 
-  <!-- Filters -->
   <div class="filters">
     <span class="filter-lbl">Período:</span>
     <button class="pbtn" onclick="setPeriod('yesterday',this)">Ayer</button>
@@ -310,12 +163,11 @@
     <button class="pbtn" onclick="setPeriod('custom',this)">Personalizado</button>
     <div class="custom-dates" id="customDates">
       <input type="date" class="date-inp" id="dateFrom" onchange="applyCustom()" />
-      <span class="sep">→</span>
+      <span style="color:var(--txt2)">→</span>
       <input type="date" class="date-inp" id="dateTo" onchange="applyCustom()" />
     </div>
   </div>
 
-  <!-- Budget -->
   <div class="budget">
     <div class="budget-top">
       <div>
@@ -334,19 +186,12 @@
       </div>
     </div>
     <div class="b-meta">
-      <div class="b-meta-item">
-        <div class="meta-dot" style="background:linear-gradient(90deg,#4f8ef7,#7eb3ff)"></div>
-        <span id="metaSpent">Gastado: $0</span>
-      </div>
-      <div class="b-meta-item">
-        <div class="meta-dot" style="background:#f59e0b"></div>
-        <span id="metaExp">Esperado hoy: —</span>
-      </div>
+      <div class="b-meta-item"><div class="meta-dot" style="background:linear-gradient(90deg,#4f8ef7,#7eb3ff)"></div><span id="metaSpent">Gastado: $0</span></div>
+      <div class="b-meta-item"><div class="meta-dot" style="background:#f59e0b"></div><span id="metaExp">Esperado hoy: —</span></div>
       <div class="b-meta-item"><span id="metaRem"></span></div>
     </div>
   </div>
 
-  <!-- Cards -->
   <div class="cards">
     <div class="card"><div class="c-lbl">Costo</div><div class="c-val" id="c-costo">—</div></div>
     <div class="card"><div class="c-lbl">Impresiones</div><div class="c-val" id="c-imp">—</div></div>
@@ -359,25 +204,17 @@
     <div class="card"><div class="c-lbl">CPM</div><div class="c-val" id="c-cpm">—</div><div class="c-sub">Costo por mil imp.</div></div>
   </div>
 
-  <!-- Chart -->
   <div class="chart-section">
     <div class="sec-head">
-      <div>
-        <h2>Evolución Diaria</h2>
-        <div class="sec-sub2">Selecciona las métricas a visualizar</div>
-      </div>
+      <div><h2>Evolución Diaria</h2><div class="sec-sub2">Selecciona las métricas a visualizar</div></div>
       <div class="toggles" id="toggles"></div>
     </div>
     <div class="chart-wrap"><canvas id="mainChart"></canvas></div>
   </div>
 
-  <!-- Table -->
   <div class="table-section">
     <div class="sec-head">
-      <div>
-        <h2>Desglose por Canal</h2>
-        <div class="sec-sub2">Rendimiento por fuente de tráfico</div>
-      </div>
+      <div><h2>Desglose por Canal</h2><div class="sec-sub2">Rendimiento por fuente de tráfico</div></div>
     </div>
     <div class="tbl-wrap">
       <table>
@@ -392,10 +229,9 @@
     </div>
   </div>
 
-</div><!-- /dashboard -->
+</div>
 
 <script>
-/* ─── METRIC DEFINITIONS ─── */
 const METRICS = [
   { key:'costo', label:'Costo',       color:'#4f8ef7' },
   { key:'imp',   label:'Impresiones', color:'#10b981' },
@@ -408,124 +244,30 @@ const METRICS = [
   { key:'tcv',   label:'Tasa Conv.',  color:'#ec4899' },
 ];
 
-/* ─── STATE ─── */
-let CFG      = null;   // loaded from localStorage
-let allRows  = [];
-let filtered = [];
-let dateFrom = null;
-let dateTo   = null;
-let budget   = Number(localStorage.getItem('budget') || 0);
-let active   = new Set(['costo','conv']);
-let chart    = null;
-let token    = null;
+let allRows=[], filtered=[], dateFrom=null, dateTo=null;
+let budget = Number(localStorage.getItem('budget')||0);
+let active = new Set(['costo','conv']);
+let chart  = null;
 
-/* ─── BOOT ─── */
 async function boot() {
-  CFG = loadCfg();
-  if (!CFG) { showSetupScreen(); return; }
-  await run();
-}
-
-function loadCfg() {
-  const c = localStorage.getItem('gcfg');
-  return c ? JSON.parse(c) : null;
-}
-
-function showSetupScreen() {
-  document.getElementById('loading').style.display = 'none';
-  const s = document.getElementById('setup');
-  s.style.display = 'flex';
-  // Pre-fill if already configured
-  if (CFG) {
-    document.getElementById('s-cid').value   = CFG.CLIENT_ID     || '';
-    document.getElementById('s-csec').value  = CFG.CLIENT_SECRET || '';
-    document.getElementById('s-rt').value    = CFG.REFRESH_TOKEN || '';
-    document.getElementById('s-sid').value   = CFG.SHEET_ID      || '';
-    document.getElementById('s-sname').value = CFG.SHEET_NAME    || '';
-  }
-}
-
-function showSetup() { showSetupScreen(); }
-
-async function saveSetup() {
-  const cfg = {
-    CLIENT_ID:     document.getElementById('s-cid').value.trim(),
-    CLIENT_SECRET: document.getElementById('s-csec').value.trim(),
-    REFRESH_TOKEN: document.getElementById('s-rt').value.trim(),
-    SHEET_ID:      document.getElementById('s-sid').value.trim(),
-    SHEET_NAME:    document.getElementById('s-sname').value.trim() || 'Sheet1',
-  };
-  if (!cfg.CLIENT_ID || !cfg.CLIENT_SECRET || !cfg.REFRESH_TOKEN || !cfg.SHEET_ID) {
-    document.getElementById('setup-error').style.display = 'block';
-    return;
-  }
-  localStorage.setItem('gcfg', JSON.stringify(cfg));
-  CFG = cfg;
-  document.getElementById('setup').style.display = 'none';
-  document.getElementById('setup-error').style.display = 'none';
-  document.getElementById('loading').style.display = 'flex';
-  await run();
-}
-
-async function run() {
   try {
-    setLoading('Autenticando con Google...');
-    token = await getToken();
-    setLoading('Cargando datos de la planilla...');
-    await loadSheet();
+    setLoading('Cargando datos...');
+    const res = await fetch('/api/data');
+    if (!res.ok) throw new Error('Error ' + res.status);
+    const { rows } = await res.json();
+    allRows = rows;
     document.getElementById('loading').style.display = 'none';
     document.getElementById('dashboard').style.display = 'block';
     buildToggles();
     initChart();
     setPeriod('30', document.getElementById('btn30'));
     document.getElementById('lastUpdate').textContent =
-      'Actualizado: ' + new Date().toLocaleTimeString('es-MX', { hour:'2-digit', minute:'2-digit' });
+      'Actualizado: ' + new Date().toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'});
   } catch(e) {
-    setLoading('Error: ' + e.message + ' — Verifica las credenciales (⚙)');
-    setTimeout(showSetupScreen, 2500);
-    console.error(e);
+    setLoading('Error al cargar datos: ' + e.message);
   }
 }
 
-/* ─── AUTH ─── */
-async function getToken() {
-  const r = await fetch('https://oauth2.googleapis.com/token', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({
-      refresh_token: CFG.REFRESH_TOKEN,
-      client_id:     CFG.CLIENT_ID,
-      client_secret: CFG.CLIENT_SECRET,
-      grant_type:    'refresh_token'
-    })
-  });
-  const d = await r.json();
-  if (!d.access_token) throw new Error('Token inválido');
-  return d.access_token;
-}
-
-/* ─── DATA ─── */
-async function loadSheet() {
-  const range = encodeURIComponent(`${CFG.SHEET_NAME}!A1:H2000`);
-  const r = await fetch(
-    `https://sheets.googleapis.com/v4/spreadsheets/${CFG.SHEET_ID}/values/${range}`,
-    { headers: { Authorization: `Bearer ${token}` } }
-  );
-  const d = await r.json();
-  if (d.error) throw new Error(d.error.message);
-  const rows = (d.values || []).slice(1);
-  allRows = rows
-    .map(row => ({
-      date:  row[0] || '',
-      cost:  parseFloat(row[2]) || 0,
-      imp:   parseInt(row[3])   || 0,
-      clics: parseInt(row[4])   || 0,
-      conv:  parseFloat(row[5]) || 0,
-    }))
-    .filter(r => /^\d{4}-\d{2}-\d{2}$/.test(r.date));
-}
-
-/* ─── PERIOD ─── */
 function setPeriod(p, btn) {
   document.querySelectorAll('.pbtn').forEach(b => b.classList.remove('on'));
   if (btn) btn.classList.add('on');
@@ -534,11 +276,9 @@ function setPeriod(p, btn) {
   cd.style.display = 'none';
   const today = new Date(); today.setHours(0,0,0,0);
   if (p === 'yesterday') {
-    const y = new Date(today); y.setDate(y.getDate()-1);
-    dateFrom = dateTo = y;
+    const y = new Date(today); y.setDate(y.getDate()-1); dateFrom = dateTo = y;
   } else {
-    dateTo = new Date(today);
-    dateFrom = new Date(today);
+    dateTo = new Date(today); dateFrom = new Date(today);
     dateFrom.setDate(dateFrom.getDate() - parseInt(p) + 1);
   }
   apply();
@@ -547,71 +287,51 @@ function setPeriod(p, btn) {
 function applyCustom() {
   const f = document.getElementById('dateFrom').value;
   const t = document.getElementById('dateTo').value;
-  if (f && t) {
-    dateFrom = new Date(f + 'T00:00:00');
-    dateTo   = new Date(t + 'T00:00:00');
-    apply();
-  }
+  if (f && t) { dateFrom = new Date(f+'T00:00:00'); dateTo = new Date(t+'T00:00:00'); apply(); }
 }
 
 function apply() {
   if (!dateFrom || !dateTo) return;
-  filtered = allRows.filter(r => {
-    const d = new Date(r.date + 'T00:00:00');
-    return d >= dateFrom && d <= dateTo;
-  });
+  filtered = allRows.filter(r => { const d = new Date(r.date+'T00:00:00'); return d>=dateFrom && d<=dateTo; });
   renderCards(); renderBudget(); renderChart(); renderTable();
 }
 
-/* ─── AGGREGATION ─── */
 function agg(rows) {
-  const t = { cost:0, imp:0, clics:0, conv:0 };
-  rows.forEach(r => { t.cost += r.cost; t.imp += r.imp; t.clics += r.clics; t.conv += r.conv; });
-  return {
-    ...t,
-    cpc: t.clics ? t.cost / t.clics            : 0,
-    cpa: t.conv  ? t.cost / t.conv              : 0,
-    ctr: t.imp   ? (t.clics / t.imp) * 100      : 0,
-    cpm: t.imp   ? (t.cost  / t.imp) * 1000     : 0,
-    tcv: t.clics ? (t.conv  / t.clics) * 100    : 0,
+  const t = {cost:0,imp:0,clics:0,conv:0};
+  rows.forEach(r => { t.cost+=r.cost; t.imp+=r.imp; t.clics+=r.clics; t.conv+=r.conv; });
+  return { ...t,
+    cpc: t.clics ? t.cost/t.clics : 0,
+    cpa: t.conv  ? t.cost/t.conv  : 0,
+    ctr: t.imp   ? (t.clics/t.imp)*100   : 0,
+    cpm: t.imp   ? (t.cost/t.imp)*1000   : 0,
+    tcv: t.clics ? (t.conv/t.clics)*100  : 0,
   };
 }
 
-function metricVal(row, key) {
+function mVal(row, key) {
   switch(key) {
     case 'costo': return row.cost;
     case 'imp':   return row.imp;
     case 'clics': return row.clics;
     case 'conv':  return row.conv;
-    case 'cpc':   return row.clics ? row.cost / row.clics          : 0;
-    case 'cpa':   return row.conv  ? row.cost / row.conv            : 0;
-    case 'ctr':   return row.imp   ? (row.clics / row.imp) * 100   : 0;
-    case 'cpm':   return row.imp   ? (row.cost  / row.imp) * 1000  : 0;
-    case 'tcv':   return row.clics ? (row.conv  / row.clics) * 100 : 0;
-  }
-  return 0;
+    case 'cpc':   return row.clics ? row.cost/row.clics : 0;
+    case 'cpa':   return row.conv  ? row.cost/row.conv  : 0;
+    case 'ctr':   return row.imp   ? (row.clics/row.imp)*100  : 0;
+    case 'cpm':   return row.imp   ? (row.cost/row.imp)*1000  : 0;
+    case 'tcv':   return row.clics ? (row.conv/row.clics)*100 : 0;
+  } return 0;
 }
 
-/* ─── FORMAT ─── */
-const mxn = n => new Intl.NumberFormat('es-MX', { style:'currency', currency:'MXN', minimumFractionDigits:2 }).format(n);
-const num = n => {
-  if (n >= 1e6) return (n/1e6).toFixed(1) + 'M';
-  if (n >= 1e3) return (n/1e3).toFixed(1) + 'K';
-  return Math.round(n).toLocaleString('es-MX');
-};
-const pct  = n => n.toFixed(2) + '%';
-const mxnS = n => {
-  if (n >= 1e6) return '$' + (n/1e6).toFixed(1) + 'M';
-  if (n >= 1e3) return '$' + (n/1e3).toFixed(1) + 'K';
-  return '$' + n.toFixed(2);
-};
-function fmtM(key, val) {
-  if (['costo','cpc','cpa','cpm'].includes(key)) return mxn(val);
-  if (['ctr','tcv'].includes(key)) return pct(val);
-  return num(val);
+const mxn  = n => new Intl.NumberFormat('es-MX',{style:'currency',currency:'MXN',minimumFractionDigits:2}).format(n);
+const num  = n => n>=1e6?(n/1e6).toFixed(1)+'M':n>=1e3?(n/1e3).toFixed(1)+'K':Math.round(n).toLocaleString('es-MX');
+const pct  = n => n.toFixed(2)+'%';
+const mxnS = n => n>=1e6?'$'+(n/1e6).toFixed(1)+'M':n>=1e3?'$'+(n/1e3).toFixed(1)+'K':'$'+n.toFixed(2);
+function fmtM(key,v) {
+  if(['costo','cpc','cpa','cpm'].includes(key)) return mxn(v);
+  if(['ctr','tcv'].includes(key)) return pct(v);
+  return num(v);
 }
 
-/* ─── CARDS ─── */
 function renderCards() {
   const t = agg(filtered);
   document.getElementById('c-costo').textContent = mxn(t.cost);
@@ -625,219 +345,120 @@ function renderCards() {
   document.getElementById('c-cpm').textContent   = t.imp   ? mxn(t.cpm) : '—';
 }
 
-/* ─── BUDGET ─── */
 function renderBudget() {
   const spent = agg(filtered).cost;
   document.getElementById('bSpent').textContent = mxn(spent);
   if (!budget) {
-    document.getElementById('bOf').textContent     = '— Sin presupuesto configurado';
+    document.getElementById('bOf').textContent = '— Sin presupuesto configurado';
     document.getElementById('barSpent').style.width = '0%';
-    document.getElementById('barExp').style.left    = '0%';
+    document.getElementById('barExp').style.left = '0%';
     document.getElementById('barExpLbl').textContent = '';
-    document.getElementById('metaSpent').textContent = 'Gastado: ' + mxn(spent);
-    document.getElementById('metaExp').textContent   = 'Configura el presupuesto mensual (✏️)';
-    document.getElementById('metaRem').textContent   = '';
+    document.getElementById('metaSpent').textContent = 'Gastado: '+mxn(spent);
+    document.getElementById('metaExp').textContent = 'Configura el presupuesto (✏️)';
+    document.getElementById('metaRem').textContent = '';
     return;
   }
-  const now  = new Date();
-  const days = new Date(now.getFullYear(), now.getMonth()+1, 0).getDate();
-  const ep   = now.getDate() / days;
-  const es   = budget * ep;
-  const sp   = Math.min((spent / budget) * 100, 100);
-  const epc  = Math.min(ep * 100, 100);
-  document.getElementById('bOf').textContent        = 'de ' + mxn(budget) + ' MXN';
-  document.getElementById('barSpent').style.width   = sp + '%';
-  document.getElementById('barExp').style.left      = epc + '%';
-  document.getElementById('barExpLbl').textContent  = 'Esperado';
-  document.getElementById('metaSpent').textContent  = 'Gastado: ' + mxn(spent);
-  document.getElementById('metaExp').textContent    = 'Esperado hoy: ' + mxn(es);
-  document.getElementById('metaRem').textContent    = 'Restante: ' + mxn(Math.max(budget - spent, 0));
+  const now=new Date(), days=new Date(now.getFullYear(),now.getMonth()+1,0).getDate();
+  const ep=now.getDate()/days, es=budget*ep;
+  const sp=Math.min((spent/budget)*100,100), epc=Math.min(ep*100,100);
+  document.getElementById('bOf').textContent = 'de '+mxn(budget)+' MXN';
+  document.getElementById('barSpent').style.width = sp+'%';
+  document.getElementById('barExp').style.left = epc+'%';
+  document.getElementById('barExpLbl').textContent = 'Esperado';
+  document.getElementById('metaSpent').textContent = 'Gastado: '+mxn(spent);
+  document.getElementById('metaExp').textContent = 'Esperado hoy: '+mxn(es);
+  document.getElementById('metaRem').textContent = 'Restante: '+mxn(Math.max(budget-spent,0));
 }
 
-/* ─── BUDGET MODAL ─── */
-function openModal() {
-  document.getElementById('modalBg').style.display = 'flex';
-  document.getElementById('budgetInput').value = budget || '';
-  setTimeout(() => document.getElementById('budgetInput').focus(), 50);
-}
-function closeModal() { document.getElementById('modalBg').style.display = 'none'; }
-function saveBudget() {
-  const v = parseFloat(document.getElementById('budgetInput').value);
-  if (!isNaN(v) && v >= 0) { budget = v; localStorage.setItem('budget', v); renderBudget(); }
-  closeModal();
-}
-document.getElementById('modalBg').addEventListener('click', e => {
-  if (e.target === document.getElementById('modalBg')) closeModal();
-});
-document.getElementById('budgetInput').addEventListener('keydown', e => {
-  if (e.key === 'Enter') saveBudget();
-  if (e.key === 'Escape') closeModal();
-});
+function openModal() { document.getElementById('modalBg').style.display='flex'; document.getElementById('budgetInput').value=budget||''; setTimeout(()=>document.getElementById('budgetInput').focus(),50); }
+function closeModal() { document.getElementById('modalBg').style.display='none'; }
+function saveBudget() { const v=parseFloat(document.getElementById('budgetInput').value); if(!isNaN(v)&&v>=0){budget=v;localStorage.setItem('budget',v);renderBudget();} closeModal(); }
+document.getElementById('modalBg').addEventListener('click',e=>{if(e.target===document.getElementById('modalBg'))closeModal();});
+document.getElementById('budgetInput').addEventListener('keydown',e=>{if(e.key==='Enter')saveBudget();if(e.key==='Escape')closeModal();});
 
-/* ─── CHART TOGGLES ─── */
 function buildToggles() {
-  const wrap = document.getElementById('toggles');
-  wrap.innerHTML = '';
-  METRICS.forEach(({ key, label, color }) => {
-    const btn = document.createElement('button');
-    btn.className = 'mt' + (active.has(key) ? ' on' : '');
-    btn.innerHTML = `<span class="dot" style="background:${color}"></span>${label}`;
-    btn.addEventListener('click', () => {
-      if (active.has(key)) { if (active.size === 1) return; active.delete(key); btn.classList.remove('on'); }
-      else { active.add(key); btn.classList.add('on'); }
+  const wrap=document.getElementById('toggles'); wrap.innerHTML='';
+  METRICS.forEach(({key,label,color})=>{
+    const btn=document.createElement('button');
+    btn.className='mt'+(active.has(key)?' on':'');
+    btn.innerHTML=`<span class="dot" style="background:${color}"></span>${label}`;
+    btn.addEventListener('click',()=>{
+      if(active.has(key)){if(active.size===1)return;active.delete(key);btn.classList.remove('on');}
+      else{active.add(key);btn.classList.add('on');}
       renderChart();
     });
     wrap.appendChild(btn);
   });
 }
 
-/* ─── CHART ─── */
 function initChart() {
-  const ctx = document.getElementById('mainChart').getContext('2d');
-  chart = new Chart(ctx, {
-    type: 'line',
-    data: { labels: [], datasets: [] },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      interaction: { mode: 'index', intersect: false },
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          backgroundColor: '#1e2533', borderColor: '#2e3a52', borderWidth: 1,
-          titleColor: '#eef2ff', bodyColor: '#8292b5', padding: 14,
-          callbacks: {
-            title: items => {
-              const d = new Date(items[0].label + 'T00:00:00');
-              return d.toLocaleDateString('es-MX', { weekday:'short', day:'numeric', month:'short' });
-            },
-            label: item => ' ' + item.dataset.label + ': ' + fmtM(item.dataset.metricKey, item.parsed.y)
+  const ctx=document.getElementById('mainChart').getContext('2d');
+  chart=new Chart(ctx,{
+    type:'line', data:{labels:[],datasets:[]},
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      interaction:{mode:'index',intersect:false},
+      plugins:{
+        legend:{display:false},
+        tooltip:{
+          backgroundColor:'#1e2533',borderColor:'#2e3a52',borderWidth:1,
+          titleColor:'#eef2ff',bodyColor:'#8292b5',padding:14,
+          callbacks:{
+            title:items=>{const d=new Date(items[0].label+'T00:00:00');return d.toLocaleDateString('es-MX',{weekday:'short',day:'numeric',month:'short'});},
+            label:item=>' '+item.dataset.label+': '+fmtM(item.dataset.metricKey,item.parsed.y)
           }
         }
       },
-      scales: {
-        x: {
-          grid: { color: 'rgba(37,45,64,.6)', drawBorder: false },
-          ticks: { color: '#8292b5', font:{ size:11 }, maxRotation:0, maxTicksLimit:12,
-            callback: (_, i) => {
-              const lbl = chart.data.labels[i];
-              if (!lbl) return '';
-              const d = new Date(lbl + 'T00:00:00');
-              return d.toLocaleDateString('es-MX', { month:'short', day:'numeric' });
-            }
-          },
-          border: { display: false }
-        },
-        y: {
-          position: 'left',
-          grid: { color: 'rgba(37,45,64,.6)', drawBorder: false },
-          ticks: { color: '#8292b5', font:{ size:11 }, callback: v => mxnS(v) },
-          border: { display: false }
-        },
-        y1: {
-          position: 'right', display: false,
-          grid: { drawOnChartArea: false },
-          ticks: { color: '#8292b5', font:{ size:11 }, callback: v => num(v) },
-          border: { display: false }
-        }
+      scales:{
+        x:{grid:{color:'rgba(37,45,64,.6)',drawBorder:false},ticks:{color:'#8292b5',font:{size:11},maxRotation:0,maxTicksLimit:12,callback:(_,i)=>{const l=chart.data.labels[i];if(!l)return'';const d=new Date(l+'T00:00:00');return d.toLocaleDateString('es-MX',{month:'short',day:'numeric'});}},border:{display:false}},
+        y:{position:'left',grid:{color:'rgba(37,45,64,.6)',drawBorder:false},ticks:{color:'#8292b5',font:{size:11},callback:v=>mxnS(v)},border:{display:false}},
+        y1:{position:'right',display:false,grid:{drawOnChartArea:false},ticks:{color:'#8292b5',font:{size:11},callback:v=>num(v)},border:{display:false}}
       }
     }
   });
 }
 
 function renderChart() {
-  if (!chart) return;
-  const byDate = {};
-  filtered.forEach(r => {
-    if (!byDate[r.date]) byDate[r.date] = { cost:0, imp:0, clics:0, conv:0 };
-    byDate[r.date].cost  += r.cost;
-    byDate[r.date].imp   += r.imp;
-    byDate[r.date].clics += r.clics;
-    byDate[r.date].conv  += r.conv;
+  if(!chart)return;
+  const byDate={};
+  filtered.forEach(r=>{if(!byDate[r.date])byDate[r.date]={cost:0,imp:0,clics:0,conv:0};byDate[r.date].cost+=r.cost;byDate[r.date].imp+=r.imp;byDate[r.date].clics+=r.clics;byDate[r.date].conv+=r.conv;});
+  const labels=Object.keys(byDate).sort();
+  const LARGE=new Set(['imp']), hasLarge=[...active].some(k=>LARGE.has(k));
+  const ctx=document.getElementById('mainChart').getContext('2d');
+  const datasets=METRICS.filter(m=>active.has(m.key)).map(({key,label,color})=>{
+    const g=ctx.createLinearGradient(0,0,0,290);g.addColorStop(0,color+'40');g.addColorStop(1,color+'00');
+    return{label,metricKey:key,data:labels.map(d=>mVal(byDate[d]||{cost:0,imp:0,clics:0,conv:0},key)),
+      borderColor:color,backgroundColor:active.size===1?g:'transparent',fill:active.size===1,
+      tension:0.42,borderWidth:2.5,pointRadius:labels.length>25?0:4,pointHoverRadius:6,
+      pointBackgroundColor:color,pointBorderColor:'#0d1117',pointBorderWidth:2,
+      yAxisID:LARGE.has(key)&&hasLarge?'y1':'y'};
   });
-  const labels = Object.keys(byDate).sort();
-  const LARGE  = new Set(['imp']);
-  const hasLarge = [...active].some(k => LARGE.has(k));
-  const ctx = document.getElementById('mainChart').getContext('2d');
-
-  const datasets = METRICS.filter(m => active.has(m.key)).map(({ key, label, color }) => {
-    const grad = ctx.createLinearGradient(0, 0, 0, 290);
-    grad.addColorStop(0, color + '40'); grad.addColorStop(1, color + '00');
-    return {
-      label, metricKey: key,
-      data: labels.map(d => metricVal(byDate[d] || { cost:0,imp:0,clics:0,conv:0 }, key)),
-      borderColor: color,
-      backgroundColor: active.size === 1 ? grad : 'transparent',
-      fill: active.size === 1,
-      tension: 0.42, borderWidth: 2.5,
-      pointRadius: labels.length > 25 ? 0 : 4,
-      pointHoverRadius: 6, pointBackgroundColor: color,
-      pointBorderColor: '#0d1117', pointBorderWidth: 2,
-      yAxisID: LARGE.has(key) && hasLarge ? 'y1' : 'y'
-    };
-  });
-
-  chart.options.scales.y1.display = hasLarge && active.size > 1;
-  const nonLarge = [...active].filter(k => !LARGE.has(k));
-  const firstKey = nonLarge[0] || [...active][0];
-  chart.options.scales.y.ticks.callback = v => {
-    if (['ctr','tcv'].includes(firstKey)) return v.toFixed(1) + '%';
-    return mxnS(v);
-  };
-  chart.data.labels   = labels;
-  chart.data.datasets = datasets;
-  chart.update('active');
+  chart.options.scales.y1.display=hasLarge&&active.size>1;
+  const nL=[...active].filter(k=>!LARGE.has(k)), fk=nL[0]||[...active][0];
+  chart.options.scales.y.ticks.callback=v=>['ctr','tcv'].includes(fk)?v.toFixed(1)+'%':mxnS(v);
+  chart.data.labels=labels; chart.data.datasets=datasets; chart.update('active');
 }
 
-/* ─── TABLE ─── */
 function renderTable() {
-  const tbody = document.getElementById('tableBody');
-  tbody.innerHTML = '';
-  if (!filtered.length) {
-    tbody.innerHTML = '<tr class="empty-row"><td colspan="10">Sin datos para el período seleccionado</td></tr>';
-    return;
-  }
-  const ch = { 'Google Ads': { cost:0, imp:0, clics:0, conv:0 } };
-  filtered.forEach(r => {
-    ch['Google Ads'].cost  += r.cost;
-    ch['Google Ads'].imp   += r.imp;
-    ch['Google Ads'].clics += r.clics;
-    ch['Google Ads'].conv  += r.conv;
-  });
-  const tots = { cost:0, imp:0, clics:0, conv:0 };
-  Object.entries(ch).forEach(([name, d]) => {
-    const cpc = d.clics ? d.cost / d.clics          : 0;
-    const cpa = d.conv  ? d.cost / d.conv            : 0;
-    const ctr = d.imp   ? (d.clics / d.imp) * 100   : 0;
-    const cpm = d.imp   ? (d.cost  / d.imp) * 1000  : 0;
-    const tcv = d.clics ? (d.conv  / d.clics) * 100 : 0;
-    tots.cost += d.cost; tots.imp += d.imp; tots.clics += d.clics; tots.conv += d.conv;
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td><span class="ch-badge ch-google">📊 ${name}</span></td>
-      <td>${mxn(d.cost)}</td><td>${num(d.imp)}</td><td>${num(d.clics)}</td>
-      <td>${d.conv.toFixed(0)}</td>
-      <td>${d.clics ? mxn(cpc) : '—'}</td><td>${d.conv ? mxn(cpa) : '—'}</td>
-      <td>${pct(ctr)}</td><td>${d.imp ? mxn(cpm) : '—'}</td><td>${pct(tcv)}</td>`;
+  const tbody=document.getElementById('tableBody'); tbody.innerHTML='';
+  if(!filtered.length){tbody.innerHTML='<tr><td colspan="10" style="text-align:center;padding:40px;color:var(--txt2)">Sin datos para el período seleccionado</td></tr>';return;}
+  const ch={'Google Ads':{cost:0,imp:0,clics:0,conv:0}};
+  filtered.forEach(r=>{ch['Google Ads'].cost+=r.cost;ch['Google Ads'].imp+=r.imp;ch['Google Ads'].clics+=r.clics;ch['Google Ads'].conv+=r.conv;});
+  const tots={cost:0,imp:0,clics:0,conv:0};
+  Object.entries(ch).forEach(([name,d])=>{
+    const cpc=d.clics?d.cost/d.clics:0,cpa=d.conv?d.cost/d.conv:0,ctr=d.imp?(d.clics/d.imp)*100:0,cpm=d.imp?(d.cost/d.imp)*1000:0,tcv=d.clics?(d.conv/d.clics)*100:0;
+    tots.cost+=d.cost;tots.imp+=d.imp;tots.clics+=d.clics;tots.conv+=d.conv;
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td><span class="ch-badge ch-google">📊 ${name}</span></td><td>${mxn(d.cost)}</td><td>${num(d.imp)}</td><td>${num(d.clics)}</td><td>${d.conv.toFixed(0)}</td><td>${d.clics?mxn(cpc):'—'}</td><td>${d.conv?mxn(cpa):'—'}</td><td>${pct(ctr)}</td><td>${d.imp?mxn(cpm):'—'}</td><td>${pct(tcv)}</td>`;
     tbody.appendChild(tr);
   });
-  const tc = tots.clics ? tots.cost / tots.clics         : 0;
-  const ta = tots.conv  ? tots.cost / tots.conv           : 0;
-  const tt = tots.imp   ? (tots.clics / tots.imp) * 100  : 0;
-  const tp = tots.imp   ? (tots.cost  / tots.imp) * 1000 : 0;
-  const tv = tots.clics ? (tots.conv  / tots.clics) * 100: 0;
-  const tr2 = document.createElement('tr');
-  tr2.className = 'totals-row';
-  tr2.innerHTML = `
-    <td style="font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--txt2)">Total</td>
-    <td>${mxn(tots.cost)}</td><td>${num(tots.imp)}</td><td>${num(tots.clics)}</td>
-    <td>${tots.conv.toFixed(0)}</td>
-    <td>${tots.clics ? mxn(tc) : '—'}</td><td>${tots.conv ? mxn(ta) : '—'}</td>
-    <td>${pct(tt)}</td><td>${tots.imp ? mxn(tp) : '—'}</td><td>${pct(tv)}</td>`;
+  const tc=tots.clics?tots.cost/tots.clics:0,ta=tots.conv?tots.cost/tots.conv:0,tt=tots.imp?(tots.clics/tots.imp)*100:0,tp=tots.imp?(tots.cost/tots.imp)*1000:0,tv=tots.clics?(tots.conv/tots.clics)*100:0;
+  const tr2=document.createElement('tr');tr2.className='totals-row';
+  tr2.innerHTML=`<td style="font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--txt2)">Total</td><td>${mxn(tots.cost)}</td><td>${num(tots.imp)}</td><td>${num(tots.clics)}</td><td>${tots.conv.toFixed(0)}</td><td>${tots.clics?mxn(tc):'—'}</td><td>${tots.conv?mxn(ta):'—'}</td><td>${pct(tt)}</td><td>${tots.imp?mxn(tp):'—'}</td><td>${pct(tv)}</td>`;
   tbody.appendChild(tr2);
 }
 
-/* ─── HELPERS ─── */
-function setLoading(msg) { document.getElementById('loading-txt').textContent = msg; }
+function setLoading(msg){document.getElementById('loading-txt').textContent=msg;}
 
 boot();
 </script>
