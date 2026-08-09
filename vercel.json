@@ -1,0 +1,10 @@
+{
+  "rewrites": [
+    { "source": "/bjbasculas",    "destination": "/dashboard.html" },
+    { "source": "/gmmuebles",     "destination": "/dashboard.html" },
+    { "source": "/drmiguel",      "destination": "/dashboard.html" },
+    { "source": "/servimex",      "destination": "/dashboard.html" },
+    { "source": "/dentalimplant", "destination": "/dashboard.html" },
+    { "source": "/api/(.*)",      "destination": "/api/$1" }
+  ]
+}
