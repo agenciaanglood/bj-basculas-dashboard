@@ -63,7 +63,8 @@
     /* BUDGET */
     .budget { background: var(--bg-card); border: 1px solid var(--brd); border-radius: 14px; padding: 22px 26px; margin-bottom: 18px; }
     .budget-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 16px; }
-    .b-tag { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .8px; color: var(--txt2); margin-bottom: 8px; }
+    .b-tag { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .8px; color: var(--txt2); margin-bottom: 4px; }
+    .b-note { font-size: 11px; color: var(--amber); margin-bottom: 8px; display: flex; align-items: center; gap: 4px; }
     .b-amounts { display: flex; align-items: baseline; gap: 8px; }
     .b-spent { font-size: 30px; font-weight: 700; letter-spacing: -.5px; }
     .b-of { font-size: 14px; color: var(--txt2); }
@@ -178,6 +179,7 @@
       <div class="budget-top">
         <div>
           <div class="b-tag">Presupuesto Mensual</div>
+          <div class="b-note">⚠ Solo considera el gasto del mes actual (<span id="bMonth"></span>)</div>
           <div class="b-amounts">
             <span class="b-spent" id="bSpent">$0</span>
             <span class="b-of" id="bOf">— Sin presupuesto</span>
@@ -280,19 +282,48 @@ if (!account) {
 
 // ─── STATE ────────────────────────────────────────────────────────────────────
 let allRows = [], filtered = [], dateFrom = null, dateTo = null;
-let budget  = Number(localStorage.getItem(account ? account.budgetKey : 'budget') || 0);
+let budget  = 0;
 let active  = new Set(['costo', 'conv']);
 let chart   = null;
+
+const accountKey = path.slice(1); // e.g. 'bjbasculas'
+
+// Mes actual para el presupuesto
+const NOW        = new Date();
+const CUR_YEAR   = NOW.getFullYear();
+const CUR_MONTH  = NOW.getMonth(); // 0-indexed
+
+function currentMonthCost() {
+  return allRows
+    .filter(r => { const d = new Date(r.date + 'T00:00:00'); return d.getFullYear() === CUR_YEAR && d.getMonth() === CUR_MONTH; })
+    .reduce((s, r) => s + r.cost, 0);
+}
+
+async function loadBudget() {
+  try {
+    const r = await fetch('/api/budget?account=' + accountKey);
+    const { budget: b } = await r.json();
+    budget = b || 0;
+  } catch { budget = 0; }
+}
 
 // ─── BOOT ─────────────────────────────────────────────────────────────────────
 async function boot() {
   if (!account) return;
   try {
     setLoading('Cargando datos...');
-    const res = await fetch('/api/data?sheet=' + encodeURIComponent(account.sheet));
-    if (!res.ok) throw new Error('Error ' + res.status);
-    const { rows } = await res.json();
+    const [dataRes] = await Promise.all([
+      fetch('/api/data?sheet=' + encodeURIComponent(account.sheet)),
+      loadBudget(),
+    ]);
+    if (!dataRes.ok) throw new Error('Error ' + dataRes.status);
+    const { rows } = await dataRes.json();
     allRows = rows;
+
+    // Label del mes en el aviso
+    document.getElementById('bMonth').textContent =
+      NOW.toLocaleDateString('es-MX', { month: 'long', year: 'numeric' });
+
     document.getElementById('loading').style.display = 'none';
     document.getElementById('app').style.display = 'block';
     buildToggles();
@@ -390,36 +421,48 @@ function renderCards() {
 
 // ─── BUDGET ───────────────────────────────────────────────────────────────────
 function renderBudget() {
-  const spent = agg(filtered).cost;
+  const spent = currentMonthCost(); // siempre el mes actual
   document.getElementById('bSpent').textContent = mxn(spent);
   if (!budget) {
     document.getElementById('bOf').textContent = '— Sin presupuesto configurado';
     document.getElementById('barSpent').style.width = '0%';
     document.getElementById('barExp').style.left = '0%';
     document.getElementById('barExpLbl').textContent = '';
-    document.getElementById('metaSpent').textContent = 'Gastado: ' + mxn(spent);
+    document.getElementById('metaSpent').textContent = 'Gastado este mes: ' + mxn(spent);
     document.getElementById('metaExp').textContent = 'Configura el presupuesto (✏️)';
     document.getElementById('metaRem').textContent = '';
     return;
   }
-  const now = new Date(), days = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
-  const ep = now.getDate() / days, es = budget * ep;
-  const sp = Math.min((spent / budget) * 100, 100), epc = Math.min(ep * 100, 100);
+  const days = new Date(CUR_YEAR, CUR_MONTH + 1, 0).getDate();
+  const ep  = NOW.getDate() / days, es = budget * ep;
+  const sp  = Math.min((spent / budget) * 100, 100), epc = Math.min(ep * 100, 100);
   document.getElementById('bOf').textContent = 'de ' + mxn(budget) + ' MXN';
   document.getElementById('barSpent').style.width = sp + '%';
   document.getElementById('barExp').style.left = epc + '%';
   document.getElementById('barExpLbl').textContent = 'Esperado';
-  document.getElementById('metaSpent').textContent = 'Gastado: ' + mxn(spent);
+  document.getElementById('metaSpent').textContent = 'Gastado este mes: ' + mxn(spent);
   document.getElementById('metaExp').textContent = 'Esperado hoy: ' + mxn(es);
   document.getElementById('metaRem').textContent = 'Restante: ' + mxn(Math.max(budget - spent, 0));
 }
 
 function openModal()  { document.getElementById('modalBg').style.display = 'flex'; document.getElementById('budgetInput').value = budget || ''; setTimeout(() => document.getElementById('budgetInput').focus(), 50); }
 function closeModal() { document.getElementById('modalBg').style.display = 'none'; }
-function saveBudget() {
+async function saveBudget() {
   const v = parseFloat(document.getElementById('budgetInput').value);
-  if (!isNaN(v) && v >= 0) { budget = v; localStorage.setItem(account.budgetKey, v); renderBudget(); }
-  closeModal();
+  if (!isNaN(v) && v >= 0) {
+    budget = v;
+    renderBudget();
+    closeModal();
+    try {
+      await fetch('/api/budget', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ account: accountKey, budget: v }),
+      });
+    } catch (e) { console.error('Error guardando presupuesto:', e); }
+  } else {
+    closeModal();
+  }
 }
 document.getElementById('modalBg').addEventListener('click', e => { if (e.target === document.getElementById('modalBg')) closeModal(); });
 document.getElementById('budgetInput').addEventListener('keydown', e => { if (e.key === 'Enter') saveBudget(); if (e.key === 'Escape') closeModal(); });
