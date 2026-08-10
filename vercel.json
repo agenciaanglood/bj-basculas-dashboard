@@ -5,6 +5,7 @@
     { "source": "/drmiguel",      "destination": "/dashboard.html" },
     { "source": "/servimex",      "destination": "/dashboard.html" },
     { "source": "/dentalimplant", "destination": "/dashboard.html" },
+    { "source": "/segomuebles",   "destination": "/dashboard.html" },
     { "source": "/api/(.*)",      "destination": "/api/$1" }
   ]
 }
