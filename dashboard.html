@@ -37,15 +37,6 @@
     @keyframes spin { to { transform: rotate(360deg); } }
     #loading-txt { font-size: 14px; color: var(--txt2); }
 
-    /* ACCOUNT NAV */
-    .account-nav-wrap { background: var(--bg-card); border-bottom: 1px solid var(--brd); padding: 0 32px; position: sticky; top: 0; z-index: 100; }
-    .account-nav { display: flex; align-items: center; gap: 2px; overflow-x: auto; scrollbar-width: none; }
-    .account-nav::-webkit-scrollbar { display: none; }
-    .anav-logo { font-size: 13px; font-weight: 700; color: var(--txt2); padding: 16px 20px 16px 4px; border-right: 1px solid var(--brd); margin-right: 8px; letter-spacing: .5px; white-space: nowrap; }
-    .anav-tab { text-decoration: none; padding: 16px 18px; font-size: 13px; font-weight: 500; color: var(--txt2); border-bottom: 2px solid transparent; transition: all .15s; white-space: nowrap; display: block; }
-    .anav-tab:hover { color: var(--txt); border-bottom-color: var(--brd2); }
-    .anav-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
-
     /* MAIN CONTENT */
     .main { padding: 28px 32px; }
 
@@ -130,7 +121,7 @@
     .btn-cancel { background: transparent; border: 1px solid var(--brd); color: var(--txt2); padding: 9px 18px; border-radius: 9px; cursor: pointer; font-family: inherit; font-size: 13px; }
     .btn-save { background: var(--accent); border: none; color: #fff; padding: 9px 18px; border-radius: 9px; cursor: pointer; font-family: inherit; font-size: 13px; font-weight: 600; }
 
-    @media (max-width: 600px) { .main { padding: 14px; } .cards { grid-template-columns: repeat(2, 1fr); } .b-spent { font-size: 24px; } .account-nav-wrap { padding: 0 14px; } }
+    @media (max-width: 600px) { .main { padding: 14px; } .cards { grid-template-columns: repeat(2, 1fr); } .b-spent { font-size: 24px; } }
   </style>
 </head>
 <body>
@@ -152,12 +143,6 @@
 </div>
 
 <div id="app" style="display:none">
-
-  <div class="account-nav-wrap">
-    <nav class="account-nav" id="accountNav">
-      <span class="anav-logo">Anglood</span>
-    </nav>
-  </div>
 
   <div class="main">
 
@@ -287,18 +272,6 @@ if (!account) {
   // Apply accent color
   document.documentElement.style.setProperty('--accent', account.color);
   document.title = 'Dashboard Google Ads — ' + account.name;
-
-  // Build nav
-  const nav = document.getElementById('accountNav');
-  Object.entries(ACCOUNTS).forEach(([p, acc]) => {
-    const a = document.createElement('a');
-    a.href = p;
-    a.className = 'anav-tab' + (p === path ? ' active' : '');
-    a.style.setProperty('--accent', acc.color);
-    a.textContent = acc.name;
-    if (p === path) a.style.color = acc.color;
-    nav.appendChild(a);
-  });
 
   document.getElementById('hTitle').textContent = 'Dashboard Google Ads — ' + account.name;
   document.getElementById('hSub').textContent   = account.subtitle;
