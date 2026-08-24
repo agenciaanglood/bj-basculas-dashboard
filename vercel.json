@@ -6,6 +6,7 @@
     { "source": "/servimex",      "destination": "/dashboard.html" },
     { "source": "/dentalimplant", "destination": "/dashboard.html" },
     { "source": "/segomuebles",   "destination": "/dashboard.html" },
+    { "source": "/poltech",       "destination": "/dashboard.html" },
     { "source": "/api/(.*)",      "destination": "/api/$1" }
   ]
 }
