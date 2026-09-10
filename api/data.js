@@ -22,7 +22,10 @@ export default async function handler(req, res) {
     // 2. Fetch sheet data
     const sheetId   = process.env.SHEET_ID;
     const sheetName = req.query.sheet || process.env.SHEET_NAME || 'Sheet1';
-    const range     = encodeURIComponent(`${sheetName}!A1:H2000`);
+    // 'google' sheets: Day, Status, Cost, Impressions, Clicks, Conversions, ...
+    // 'meta'   sheets: Day, Amount Spent, Impressions, Link Clicks, Results, Campaign Name
+    const channel   = (req.query.channel || 'google').toLowerCase();
+    const range     = encodeURIComponent(`${sheetName}!A1:M2000`);
     const sheetRes  = await fetch(
       `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${range}`,
       { headers: { Authorization: `Bearer ${tokenData.access_token}` } }
@@ -32,14 +35,26 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: sheetData.error.message });
     }
 
-    // 3. Parse rows (skip header)
-    const rows = (sheetData.values || []).slice(1).map(row => ({
-      date:  row[0] || '',
-      cost:  parseFloat(row[2]) || 0,
-      imp:   parseInt(row[3])   || 0,
-      clics: parseInt(row[4])   || 0,
-      conv:  parseFloat(row[5]) || 0,
-    })).filter(r => /^\d{4}-\d{2}-\d{2}$/.test(r.date));
+    // 3. Parse rows (skip header) — column layout depends on the ad platform
+    const parseRow = channel === 'meta'
+      ? row => ({
+          date:  row[0] || '',
+          cost:  parseFloat(row[1]) || 0,
+          imp:   parseInt(row[2])   || 0,
+          clics: parseInt(row[3])   || 0,
+          conv:  parseFloat(row[4]) || 0,
+        })
+      : row => ({
+          date:  row[0] || '',
+          cost:  parseFloat(row[2]) || 0,
+          imp:   parseInt(row[3])   || 0,
+          clics: parseInt(row[4])   || 0,
+          conv:  parseFloat(row[5]) || 0,
+        });
+
+    const rows = (sheetData.values || []).slice(1)
+      .map(parseRow)
+      .filter(r => /^\d{4}-\d{2}-\d{2}$/.test(r.date));
 
     res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate');
     return res.status(200).json({ rows });

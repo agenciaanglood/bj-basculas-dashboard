@@ -110,6 +110,7 @@
     tbody td { padding: 13px 14px; color: var(--txt); white-space: nowrap; }
     .ch-badge { display: inline-flex; align-items: center; gap: 7px; padding: 4px 11px; border-radius: 7px; font-size: 12px; font-weight: 500; }
     .ch-google { background: rgba(79,142,247,.1); color: var(--blue2); border: 1px solid rgba(79,142,247,.2); }
+    .ch-meta { background: rgba(236,72,153,.1); color: var(--pink); border: 1px solid rgba(236,72,153,.2); }
     .totals-row td { font-weight: 600; background: rgba(79,142,247,.04); }
 
     /* BUDGET MODAL */
@@ -245,13 +246,17 @@
 // IMPORTANTE: los valores "sheet" deben coincidir EXACTAMENTE con el nombre
 // de la pestaña en Google Sheets (mayúsculas y espacios incluidos).
 const ACCOUNTS = {
-  '/bjbasculas':    { sheet: 'BJ BASCULAS - Google',  name: 'BJ Básculas',   subtitle: 'Google Ads · México',  color: '#4f8ef7', budgetKey: 'budget_bjbasculas' },
-  '/gmmuebles':     { sheet: 'GM Muebles - Google',   name: 'GM Muebles',    subtitle: 'Google Ads · México',  color: '#10b981', budgetKey: 'budget_gmmuebles' },
-  '/drmiguel':      { sheet: 'Miguel Barnes - Google',name: 'Miguel Barnes', subtitle: 'Google Ads · Clínica', color: '#8b5cf6', budgetKey: 'budget_drmiguel' },
-  '/servimex':      { sheet: 'Servimex - Google',     name: 'Servimex',      subtitle: 'Google Ads · México',  color: '#f59e0b', budgetKey: 'budget_servimex' },
-  '/dentalimplant': { sheet: 'Dentarte TJ - Google',  name: 'Dentarte TJ',   subtitle: 'Google Ads · Clínica', color: '#06b6d4', budgetKey: 'budget_dentalimplant' },
-  '/segomuebles':   { sheet: 'Sego Muebles - Google', name: 'Sego Muebles',  subtitle: 'Google Ads · México',  color: '#f472b6', budgetKey: 'budget_segomuebles' },
-  '/poltech':       { sheet: 'Poltech - Google',      name: 'Poltech',       subtitle: 'Google Ads · México',  color: '#f97316', budgetKey: 'budget_poltech' },
+  '/bjbasculas':    { sources: [{ sheet: 'BJ BASCULAS - Google',     channel: 'google' }], name: 'BJ Básculas',   subtitle: 'Google Ads · México',          color: '#4f8ef7', budgetKey: 'budget_bjbasculas' },
+  '/gmmuebles':     { sources: [{ sheet: 'GM Muebles - Google',      channel: 'google' }], name: 'GM Muebles',    subtitle: 'Google Ads · México',          color: '#10b981', budgetKey: 'budget_gmmuebles' },
+  '/drmiguel':      { sources: [{ sheet: 'Miguel Barnes - Google',   channel: 'google' }], name: 'Miguel Barnes', subtitle: 'Google Ads · Clínica',         color: '#8b5cf6', budgetKey: 'budget_drmiguel' },
+  '/servimex':      { sources: [{ sheet: 'Servimex - Google',        channel: 'google' }], name: 'Servimex',      subtitle: 'Google Ads · México',          color: '#f59e0b', budgetKey: 'budget_servimex' },
+  '/dentalimplant': { sources: [{ sheet: 'Dentarte TJ - Google',     channel: 'google' }], name: 'Dentarte TJ',   subtitle: 'Google Ads · Clínica',         color: '#06b6d4', budgetKey: 'budget_dentalimplant' },
+  '/segomuebles':   { sources: [{ sheet: 'Sego Muebles - Google',    channel: 'google' }], name: 'Sego Muebles',  subtitle: 'Google Ads · México',          color: '#f472b6', budgetKey: 'budget_segomuebles' },
+  '/poltech':       { sources: [{ sheet: 'Poltech - Google',         channel: 'google' }], name: 'Poltech',       subtitle: 'Google Ads · México',          color: '#f97316', budgetKey: 'budget_poltech' },
+  '/qrwork':        { sources: [{ sheet: 'QrWork - Google',          channel: 'google' },
+                                 { sheet: 'QrWork - Facebook',       channel: 'meta'   }], name: 'QrWork',        subtitle: 'Google Ads + Meta Ads · México', color: '#14b8a6', budgetKey: 'budget_qrwork' },
+  '/pieleruedas':   { sources: [{ sheet: 'Piel e Ruedas - Facebook', channel: 'meta'   }], name: 'Piel & Ruedas', subtitle: 'Meta Ads · México',            color: '#ef4444', budgetKey: 'budget_pieleruedas' },
+  '/realty':        { sources: [{ sheet: 'Realty - Facebook',        channel: 'meta'   }], name: 'Realty',        subtitle: 'Meta Ads · México',            color: '#6366f1', budgetKey: 'budget_realty' },
 };
 
 const METRICS = [
@@ -270,14 +275,18 @@ const METRICS = [
 const path    = window.location.pathname.replace(/\/$/, '') || '/bjbasculas';
 const account = ACCOUNTS[path];
 
+const PLATFORM_LABEL = { google: 'Google Ads', meta: 'Meta Ads' };
+
 if (!account) {
   document.getElementById('loading-txt').textContent = 'Cuenta no encontrada: ' + path;
 } else {
   // Apply accent color
   document.documentElement.style.setProperty('--accent', account.color);
-  document.title = 'Dashboard Google Ads — ' + account.name;
+  const platforms = [...new Set(account.sources.map(s => PLATFORM_LABEL[s.channel] || s.channel))];
+  const dashTitle = 'Dashboard ' + platforms.join(' + ') + ' — ' + account.name;
+  document.title = dashTitle;
 
-  document.getElementById('hTitle').textContent = 'Dashboard Google Ads — ' + account.name;
+  document.getElementById('hTitle').textContent = dashTitle;
   document.getElementById('hSub').textContent   = account.subtitle;
 }
 
@@ -309,17 +318,22 @@ async function loadBudget() {
 }
 
 // ─── BOOT ─────────────────────────────────────────────────────────────────────
+async function fetchSource(src) {
+  const r = await fetch('/api/data?sheet=' + encodeURIComponent(src.sheet) + '&channel=' + src.channel);
+  if (!r.ok) throw new Error('Error ' + r.status + ' (' + src.sheet + ')');
+  const { rows } = await r.json();
+  return rows.map(row => ({ ...row, channel: src.channel }));
+}
+
 async function boot() {
   if (!account) return;
   try {
     setLoading('Cargando datos...');
-    const [dataRes] = await Promise.all([
-      fetch('/api/data?sheet=' + encodeURIComponent(account.sheet)),
+    const [sourcesData] = await Promise.all([
+      Promise.all(account.sources.map(fetchSource)),
       loadBudget(),
     ]);
-    if (!dataRes.ok) throw new Error('Error ' + dataRes.status);
-    const { rows } = await dataRes.json();
-    allRows = rows;
+    allRows = sourcesData.flat();
 
     // Label del mes en el aviso
     document.getElementById('bMonth').textContent =
@@ -617,16 +631,25 @@ function renderTable() {
     tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:40px;color:var(--txt2)">Sin datos para el período seleccionado</td></tr>';
     return;
   }
-  const ch = { 'Google Ads': { cost: 0, imp: 0, clics: 0, conv: 0 } };
-  filtered.forEach(r => { ch['Google Ads'].cost += r.cost; ch['Google Ads'].imp += r.imp; ch['Google Ads'].clics += r.clics; ch['Google Ads'].conv += r.conv; });
+  const CHANNEL_META = {
+    google: { label: 'Google Ads', badge: 'ch-google', icon: '📊' },
+    meta:   { label: 'Meta Ads',   badge: 'ch-meta',   icon: '📣' },
+  };
+  const ch = {};
+  filtered.forEach(r => {
+    const key = r.channel || 'google';
+    if (!ch[key]) ch[key] = { cost: 0, imp: 0, clics: 0, conv: 0 };
+    ch[key].cost += r.cost; ch[key].imp += r.imp; ch[key].clics += r.clics; ch[key].conv += r.conv;
+  });
   const tots = { cost: 0, imp: 0, clics: 0, conv: 0 };
-  Object.entries(ch).forEach(([name, d]) => {
+  Object.entries(ch).forEach(([key, d]) => {
+    const meta = CHANNEL_META[key] || { label: key, badge: 'ch-google', icon: '📊' };
     const cpc = d.clics ? d.cost / d.clics : 0, cpa = d.conv ? d.cost / d.conv : 0,
           ctr = d.imp ? (d.clics / d.imp) * 100 : 0, cpm = d.imp ? (d.cost / d.imp) * 1000 : 0,
           tcv = d.clics ? (d.conv / d.clics) * 100 : 0;
     tots.cost += d.cost; tots.imp += d.imp; tots.clics += d.clics; tots.conv += d.conv;
     const tr = document.createElement('tr');
-    tr.innerHTML = `<td><span class="ch-badge ch-google">📊 ${name}</span></td><td>${mxn(d.cost)}</td><td>${num(d.imp)}</td><td>${num(d.clics)}</td><td>${d.conv.toFixed(0)}</td><td>${d.clics ? mxn(cpc) : '—'}</td><td>${d.conv ? mxn(cpa) : '—'}</td><td>${pct(ctr)}</td><td>${d.imp ? mxn(cpm) : '—'}</td><td>${pct(tcv)}</td>`;
+    tr.innerHTML = `<td><span class="ch-badge ${meta.badge}">${meta.icon} ${meta.label}</span></td><td>${mxn(d.cost)}</td><td>${num(d.imp)}</td><td>${num(d.clics)}</td><td>${d.conv.toFixed(0)}</td><td>${d.clics ? mxn(cpc) : '—'}</td><td>${d.conv ? mxn(cpa) : '—'}</td><td>${pct(ctr)}</td><td>${d.imp ? mxn(cpm) : '—'}</td><td>${pct(tcv)}</td>`;
     tbody.appendChild(tr);
   });
   const tc = tots.clics ? tots.cost / tots.clics : 0, ta = tots.conv ? tots.cost / tots.conv : 0,
