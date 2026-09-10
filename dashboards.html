@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboards — Anglood</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --bg:      #0d1117;
+      --bg-card: #161b27;
+      --bg-hov:  #1c2335;
+      --brd:     #252d40;
+      --brd2:    #2e3a52;
+      --txt:     #eef2ff;
+      --txt2:    #8292b5;
+      --txt3:    #4a5775;
+    }
+    body {
+      font-family: 'Inter', -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--txt);
+      min-height: 100vh;
+      padding: 40px 24px;
+    }
+    .wrap { max-width: 980px; margin: 0 auto; }
+    .header { text-align: center; margin-bottom: 36px; }
+    .header-icon {
+      width: 56px; height: 56px; margin: 0 auto 18px;
+      background: linear-gradient(135deg, #4f8ef7, #8b5cf6);
+      border-radius: 14px; display: flex; align-items: center; justify-content: center;
+      font-size: 26px; box-shadow: 0 6px 20px rgba(79,142,247,.25);
+    }
+    h1 { font-size: 24px; font-weight: 700; letter-spacing: -.3px; margin-bottom: 8px; }
+    .sub { font-size: 14px; color: var(--txt2); }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+      gap: 16px;
+    }
+    .card {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      background: var(--bg-card);
+      border: 1px solid var(--brd);
+      border-radius: 16px;
+      padding: 22px;
+      text-decoration: none;
+      color: var(--txt);
+      position: relative;
+      overflow: hidden;
+      transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+    }
+    .card::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 3px;
+      background: var(--accent);
+      opacity: .85;
+    }
+    .card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 14px 34px rgba(0,0,0,.4);
+      border-color: var(--brd2);
+    }
+    .c-icon {
+      width: 42px; height: 42px; border-radius: 11px;
+      background: color-mix(in srgb, var(--accent) 18%, transparent);
+      color: var(--accent);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px; font-weight: 700;
+    }
+    .c-name { font-size: 16px; font-weight: 600; letter-spacing: -.2px; }
+    .c-sub { font-size: 12px; color: var(--txt2); margin-top: 3px; }
+    .c-arrow {
+      margin-top: auto;
+      font-size: 12px; color: var(--txt3);
+      display: flex; align-items: center; gap: 6px;
+      transition: color .18s ease, gap .18s ease;
+    }
+    .card:hover .c-arrow { color: var(--accent); gap: 9px; }
+
+    .footer { text-align: center; margin-top: 40px; font-size: 12px; color: var(--txt3); }
+
+    @media (max-width: 480px) { body { padding: 28px 16px; } }
+  </style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="header">
+    <div class="header-icon">📊</div>
+    <h1>Dashboards — Anglood</h1>
+    <div class="sub">Selecciona una cuenta para ver su dashboard de Ads</div>
+  </div>
+
+  <div class="grid" id="grid"></div>
+
+  <div class="footer">Anglood · Reportes de Google Ads &amp; Meta Ads</div>
+</div>
+
+<script>
+  const ACCOUNTS = [
+    { route: '/bjbasculas',    name: 'BJ Básculas',   subtitle: 'Google Ads · México',          color: '#4f8ef7' },
+    { route: '/gmmuebles',     name: 'GM Muebles',    subtitle: 'Google Ads · México',          color: '#10b981' },
+    { route: '/drmiguel',      name: 'Miguel Barnes', subtitle: 'Google Ads · Clínica',         color: '#8b5cf6' },
+    { route: '/servimex',      name: 'Servimex',      subtitle: 'Google Ads · México',          color: '#f59e0b' },
+    { route: '/dentalimplant', name: 'Dentarte TJ',   subtitle: 'Google Ads · Clínica',         color: '#06b6d4' },
+    { route: '/segomuebles',   name: 'Sego Muebles',  subtitle: 'Google Ads · México',          color: '#f472b6' },
+    { route: '/poltech',       name: 'Poltech',       subtitle: 'Google Ads · México',          color: '#f97316' },
+    { route: '/qrwork',        name: 'QrWork',        subtitle: 'Google Ads + Meta Ads · México', color: '#14b8a6' },
+    { route: '/pieleruedas',   name: 'Piel & Ruedas', subtitle: 'Meta Ads · México',            color: '#10b981' },
+    { route: '/realty',        name: 'Realty',        subtitle: 'Meta Ads · México',            color: '#6366f1' },
+  ];
+
+  const grid = document.getElementById('grid');
+  ACCOUNTS.forEach(({ route, name, subtitle, color }) => {
+    const a = document.createElement('a');
+    a.href = route;
+    a.className = 'card';
+    a.style.setProperty('--accent', color);
+    a.innerHTML = `
+      <div class="c-icon">${name.trim().charAt(0)}</div>
+      <div>
+        <div class="c-name">${name}</div>
+        <div class="c-sub">${subtitle}</div>
+      </div>
+      <div class="c-arrow">Ver dashboard →</div>
+    `;
+    grid.appendChild(a);
+  });
+</script>
+
+</body>
+</html>
