@@ -183,6 +183,17 @@
   </div>
 </div>
 
+<div class="modal-bg" id="confirmModalBg">
+  <div class="modal-box">
+    <h3>Eliminar actualización</h3>
+    <p style="color:var(--txt2); font-size:13px; margin-bottom:18px; margin-top:-8px;">¿Seguro que quieres eliminar este registro? Esta acción no se puede deshacer.</p>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeConfirmModal()">Cancelar</button>
+      <button class="btn-save" style="background:var(--red)" onclick="confirmDeleteUpdate()">Eliminar</button>
+    </div>
+  </div>
+</div>
+
 <div id="app" style="display:none">
 
   <div class="main">
@@ -628,32 +639,61 @@ async function addUpdate() {
   const comment = document.getElementById('updComment').value.trim();
   if (!date || !comment) return;
   try {
-    if (editingUpdateId) {
-      await fetch('/api/updates', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ account: accountKey, id: editingUpdateId, date, comment }),
-      });
-    } else {
-      await fetch('/api/updates', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ account: accountKey, date, comment }),
-      });
+    const r = editingUpdateId
+      ? await fetch('/api/updates', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ account: accountKey, id: editingUpdateId, date, comment }),
+        })
+      : await fetch('/api/updates', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ account: accountKey, date, comment }),
+        });
+    if (!r.ok) {
+      const d = await r.json().catch(() => ({}));
+      alert('No se pudo guardar la actualización: ' + (d.error || r.status));
+      return;
     }
     cancelEditUpdate();
     await loadUpdates();
-  } catch (e) { console.error('Error guardando actualización:', e); }
+  } catch (e) {
+    console.error('Error guardando actualización:', e);
+    alert('Error de red al guardar la actualización.');
+  }
 }
 
-async function deleteUpdate(id) {
-  if (!confirm('¿Eliminar esta actualización?')) return;
+let pendingDeleteId = null;
+
+function deleteUpdate(id) {
+  pendingDeleteId = id;
+  document.getElementById('confirmModalBg').style.display = 'flex';
+}
+
+function closeConfirmModal() {
+  document.getElementById('confirmModalBg').style.display = 'none';
+  pendingDeleteId = null;
+}
+
+async function confirmDeleteUpdate() {
+  const id = pendingDeleteId;
+  closeConfirmModal();
+  if (!id) return;
   try {
-    await fetch('/api/updates?account=' + encodeURIComponent(accountKey) + '&id=' + encodeURIComponent(id), { method: 'DELETE' });
+    const r = await fetch('/api/updates?account=' + encodeURIComponent(accountKey) + '&id=' + encodeURIComponent(id), { method: 'DELETE' });
+    if (!r.ok) {
+      const d = await r.json().catch(() => ({}));
+      alert('No se pudo eliminar la actualización: ' + (d.error || r.status));
+      return;
+    }
     if (editingUpdateId === id) cancelEditUpdate();
     await loadUpdates();
-  } catch (e) { console.error('Error eliminando actualización:', e); }
+  } catch (e) {
+    console.error('Error eliminando actualización:', e);
+    alert('Error de red al eliminar la actualización.');
+  }
 }
+document.getElementById('confirmModalBg').addEventListener('click', e => { if (e.target === document.getElementById('confirmModalBg')) closeConfirmModal(); });
 
 document.getElementById('updComment').addEventListener('keydown', e => { if (e.key === 'Enter') addUpdate(); });
 
