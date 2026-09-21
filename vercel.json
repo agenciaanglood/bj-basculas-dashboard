@@ -10,6 +10,8 @@
     { "source": "/qrwork",        "destination": "/dashboard.html" },
     { "source": "/pieleruedas",   "destination": "/dashboard.html" },
     { "source": "/realty",        "destination": "/dashboard.html" },
+    { "source": "/labpetrone",    "destination": "/dashboard.html" },
+    { "source": "/drsaab",        "destination": "/dashboard.html" },
     { "source": "/dashboards",    "destination": "/dashboards.html" },
     { "source": "/analista",      "destination": "/analista.html" },
     { "source": "/api/(.*)",      "destination": "/api/$1" }
