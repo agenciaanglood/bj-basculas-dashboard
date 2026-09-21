@@ -125,6 +125,30 @@
     .ch-meta { background: rgba(236,72,153,.1); color: var(--pink); border: 1px solid rgba(236,72,153,.2); }
     .totals-row td { font-weight: 600; background: rgba(79,142,247,.04); }
 
+    /* UPDATES LOG */
+    .update-form { display: flex; gap: 10px; margin-bottom: 18px; flex-wrap: wrap; }
+    .upd-inp { flex: 1; min-width: 220px; background: var(--bg-inp); border: 1px solid var(--brd); color: var(--txt); padding: 9px 14px; border-radius: 8px; font-size: 13px; font-family: inherit; }
+    .upd-inp:focus { outline: none; border-color: var(--accent); }
+    .updates-list { display: flex; flex-direction: column; gap: 10px; }
+    .update-item { display: flex; gap: 14px; padding: 12px 16px; background: var(--bg-inp); border: 1px solid var(--brd); border-radius: 10px; }
+    .update-date { font-size: 12px; font-weight: 600; color: var(--accent); white-space: nowrap; min-width: 90px; }
+    .update-comment { font-size: 13px; color: var(--txt); }
+    .updates-empty { font-size: 13px; color: var(--txt2); padding: 12px 0; }
+
+    /* TABS */
+    .tabs { display: flex; gap: 8px; margin-bottom: 18px; }
+    .tab-btn { background: transparent; border: 1px solid var(--brd); color: var(--txt2); padding: 9px 18px; border-radius: 8px; font-size: 13px; cursor: pointer; font-family: inherit; transition: all .15s; }
+    .tab-btn:hover { border-color: var(--accent); color: var(--txt); }
+    .tab-btn.on { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+
+    /* UPDATES TAB */
+    .updates-tab-layout { display: grid; grid-template-columns: 240px 1fr; gap: 18px; }
+    .updates-client-list { display: flex; flex-direction: column; gap: 6px; max-height: 560px; overflow-y: auto; }
+    .updates-client-btn { text-align: left; background: var(--bg-inp); border: 1px solid var(--brd); color: var(--txt); padding: 10px 14px; border-radius: 8px; font-size: 13px; cursor: pointer; font-family: inherit; transition: all .15s; }
+    .updates-client-btn:hover { border-color: var(--accent); }
+    .updates-client-btn.on { border-color: var(--accent); background: rgba(79,142,247,.08); font-weight: 600; }
+    @media (max-width: 700px) { .updates-tab-layout { grid-template-columns: 1fr; } }
+
     /* BUDGET MODAL */
     .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,.65); display: none; align-items: center; justify-content: center; z-index: 200; }
     .modal-box { background: var(--bg-card); border: 1px solid var(--brd2); border-radius: 16px; padding: 30px; width: 320px; }
@@ -173,6 +197,13 @@
         <span id="lastUpdate">Cargando...</span>
       </div>
     </div>
+
+    <div class="tabs">
+      <button class="tab-btn on" id="tabBtnDashboard" onclick="switchTab('dashboard')">📊 Dashboard</button>
+      <button class="tab-btn" id="tabBtnUpdates" onclick="switchTab('updates')">📝 Atualizações</button>
+    </div>
+
+    <div id="tabDashboard">
 
     <div class="client-bar">
       <span class="filter-lbl">Cliente:</span>
@@ -256,6 +287,34 @@
           </thead>
           <tbody id="tableBody"></tbody>
         </table>
+      </div>
+    </div>
+
+    <div class="table-section" style="margin-top:18px">
+      <div class="sec-head">
+        <div><h2>Actualizaciones de la Cuenta</h2><div class="sec-sub2">Registro de cambios y acciones realizadas</div></div>
+      </div>
+      <div class="update-form">
+        <input type="date" class="date-inp" id="updDate" />
+        <input type="text" class="upd-inp" id="updComment" placeholder="¿Qué se hizo en la cuenta?" />
+        <button class="btn-save" onclick="addUpdate()">Agregar</button>
+      </div>
+      <div id="updatesList" class="updates-list"></div>
+    </div>
+
+    </div><!-- #tabDashboard -->
+
+    <div id="tabUpdates" style="display:none">
+      <div class="table-section">
+        <div class="sec-head">
+          <div><h2>Actualizaciones por Cliente</h2><div class="sec-sub2">Selecciona un cliente para ver sus últimas 3 actualizaciones</div></div>
+        </div>
+        <div class="updates-tab-layout">
+          <div class="updates-client-list" id="updatesClientList"></div>
+          <div class="updates-client-detail" id="updatesClientDetail">
+            <div class="updates-empty">Selecciona un cliente de la lista.</div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -414,11 +473,13 @@ async function loadAccountData() {
     const [sourcesData] = await Promise.all([
       Promise.all(account.sources.map(fetchSource)),
       loadBudget(),
+      loadUpdates(),
     ]);
     allRows = sourcesData.flat();
 
     document.getElementById('bMonth').textContent =
       NOW.toLocaleDateString('es-MX', { month: 'long', year: 'numeric' });
+    document.getElementById('updDate').value = new Date().toISOString().slice(0, 10);
 
     document.getElementById('loading').style.display = 'none';
     document.getElementById('app').style.display = 'block';
@@ -500,6 +561,90 @@ function renderSpendAlert() {
     } else {
       box.style.display = 'none';
     }
+  }
+}
+
+// ─── ACTUALIZACIONES DE LA CUENTA (cliente seleccionado) ─────────────────────
+function escapeHtml(s) {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+async function loadUpdates() {
+  try {
+    const r = await fetch('/api/updates?account=' + accountKey);
+    const { updates } = await r.json();
+    renderUpdates(updates || []);
+  } catch (e) { renderUpdates([]); }
+}
+
+function renderUpdates(updates) {
+  const box = document.getElementById('updatesList');
+  if (!updates.length) {
+    box.innerHTML = '<div class="updates-empty">Sin actualizaciones registradas.</div>';
+    return;
+  }
+  box.innerHTML = updates.map(u => `
+    <div class="update-item">
+      <div class="update-date">${fmtDateEs(u.date)}</div>
+      <div class="update-comment">${escapeHtml(u.comment)}</div>
+    </div>
+  `).join('');
+}
+
+async function addUpdate() {
+  const date    = document.getElementById('updDate').value;
+  const comment = document.getElementById('updComment').value.trim();
+  if (!date || !comment) return;
+  try {
+    await fetch('/api/updates', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ account: accountKey, date, comment }),
+    });
+    document.getElementById('updComment').value = '';
+    await loadUpdates();
+  } catch (e) { console.error('Error guardando actualización:', e); }
+}
+document.getElementById('updComment').addEventListener('keydown', e => { if (e.key === 'Enter') addUpdate(); });
+
+// ─── TABS / ACTUALIZACIONES POR CLIENTE ──────────────────────────────────────
+function switchTab(tab) {
+  document.getElementById('tabDashboard').style.display = tab === 'dashboard' ? 'block' : 'none';
+  document.getElementById('tabUpdates').style.display   = tab === 'updates'   ? 'block' : 'none';
+  document.getElementById('tabBtnDashboard').classList.toggle('on', tab === 'dashboard');
+  document.getElementById('tabBtnUpdates').classList.toggle('on', tab === 'updates');
+  if (tab === 'updates') buildUpdatesClientList();
+}
+
+function buildUpdatesClientList() {
+  const box = document.getElementById('updatesClientList');
+  if (box.dataset.built) return;
+  box.dataset.built = '1';
+  box.innerHTML = Object.entries(CLIENTS).map(([key, c]) =>
+    `<button class="updates-client-btn" id="ucbtn-${key}" onclick="showClientUpdates('${key}')">${c.name}</button>`
+  ).join('');
+}
+
+async function showClientUpdates(key) {
+  document.querySelectorAll('.updates-client-btn').forEach(b => b.classList.remove('on'));
+  document.getElementById('ucbtn-' + key).classList.add('on');
+  const detail = document.getElementById('updatesClientDetail');
+  detail.innerHTML = '<div class="updates-empty">Cargando...</div>';
+  try {
+    const r = await fetch('/api/updates?account=' + key + '&limit=3');
+    const { updates } = await r.json();
+    if (!updates.length) {
+      detail.innerHTML = '<div class="updates-empty">Sin actualizaciones registradas para ' + escapeHtml(CLIENTS[key].name) + '.</div>';
+      return;
+    }
+    detail.innerHTML = '<div class="updates-list">' + updates.map(u => `
+      <div class="update-item">
+        <div class="update-date">${fmtDateEs(u.date)}</div>
+        <div class="update-comment">${escapeHtml(u.comment)}</div>
+      </div>
+    `).join('') + '</div>';
+  } catch (e) {
+    detail.innerHTML = '<div class="updates-empty">Error al cargar actualizaciones.</div>';
   }
 }
 
