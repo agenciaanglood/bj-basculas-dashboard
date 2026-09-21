@@ -191,14 +191,14 @@
     <div class="budget" id="budgetSingle">
       <div class="budget-top">
         <div>
-          <div class="b-tag">Presupuesto Mensual</div>
+          <div class="b-tag" id="budgetTag">Presupuesto Mensual</div>
           <div class="b-note">⚠ Solo considera el gasto del mes actual (<span id="bMonth"></span>)</div>
           <div class="b-amounts">
             <span class="b-spent" id="bSpent">$0</span>
             <span class="b-of" id="bOf">— Sin presupuesto</span>
           </div>
         </div>
-        <button class="edit-btn" onclick="openModal()" title="Editar presupuesto">✏️</button>
+        <button class="edit-btn" id="budgetEditBtn" onclick="openModal()" title="Editar presupuesto">✏️</button>
       </div>
       <div class="bar-wrap">
         <div class="bar-spent" id="barSpent" style="width:0%"></div>
@@ -497,42 +497,48 @@ function renderCards() {
 
 // ─── BUDGET ───────────────────────────────────────────────────────────────────
 function renderBudget() {
+  document.getElementById('budgetSingle').style.display = 'block';
+  document.getElementById('budgetEditBtn').style.display = channels.length > 1 ? 'none' : '';
+  document.getElementById('budgetTag').textContent = channels.length > 1 ? 'Presupuesto Total' : 'Presupuesto Mensual';
+  renderSingleBudget();
   if (channels.length > 1) {
-    document.getElementById('budgetSingle').style.display = 'none';
     const wrap = document.getElementById('budgetMulti');
     wrap.style.display = 'grid';
     wrap.innerHTML = channels.map(ch => budgetCardHTML(ch)).join('');
     channels.forEach(fillBudgetCard);
   } else {
-    document.getElementById('budgetSingle').style.display = 'block';
     document.getElementById('budgetMulti').style.display = 'none';
-    renderSingleBudget();
   }
 }
 
 function renderSingleBudget() {
-  const spent = currentMonthCost(); // siempre el mes actual
+  const spent = currentMonthCost(); // siempre el mes actual (todos los canales)
+  const totalBudget = channels.length > 1
+    ? Object.values(channelBudgets).reduce((a, b) => a + b, 0)
+    : budget;
   document.getElementById('bSpent').textContent = mxn(spent);
-  if (!budget) {
+  if (!totalBudget) {
     document.getElementById('bOf').textContent = '— Sin presupuesto configurado';
     document.getElementById('barSpent').style.width = '0%';
     document.getElementById('barExp').style.left = '0%';
     document.getElementById('barExpLbl').textContent = '';
     document.getElementById('metaSpent').textContent = 'Gastado este mes: ' + mxn(spent);
-    document.getElementById('metaExp').textContent = 'Configura el presupuesto (✏️)';
+    document.getElementById('metaExp').textContent = channels.length > 1
+      ? 'Configura el presupuesto de cada canal abajo'
+      : 'Configura el presupuesto (✏️)';
     document.getElementById('metaRem').textContent = '';
     return;
   }
   const days = new Date(CUR_YEAR, CUR_MONTH + 1, 0).getDate();
-  const ep  = NOW.getDate() / days, es = budget * ep;
-  const sp  = Math.min((spent / budget) * 100, 100), epc = Math.min(ep * 100, 100);
-  document.getElementById('bOf').textContent = 'de ' + mxn(budget) + ' MXN';
+  const ep  = NOW.getDate() / days, es = totalBudget * ep;
+  const sp  = Math.min((spent / totalBudget) * 100, 100), epc = Math.min(ep * 100, 100);
+  document.getElementById('bOf').textContent = 'de ' + mxn(totalBudget) + ' MXN';
   document.getElementById('barSpent').style.width = sp + '%';
   document.getElementById('barExp').style.left = epc + '%';
   document.getElementById('barExpLbl').textContent = 'Esperado';
   document.getElementById('metaSpent').textContent = 'Gastado este mes: ' + mxn(spent);
   document.getElementById('metaExp').textContent = 'Esperado hoy: ' + mxn(es);
-  document.getElementById('metaRem').textContent = 'Restante: ' + mxn(Math.max(budget - spent, 0));
+  document.getElementById('metaRem').textContent = 'Restante: ' + mxn(Math.max(totalBudget - spent, 0));
 }
 
 // ─── BUDGET (multi-canal: 1 tarjeta por plataforma) ────────────────────────────
