@@ -77,6 +77,8 @@
     .b-meta { display: flex; gap: 24px; margin-top: 12px; flex-wrap: wrap; }
     .b-meta-item { display: flex; align-items: center; gap: 7px; font-size: 12px; color: var(--txt2); }
     .meta-dot { width: 8px; height: 8px; border-radius: 2px; }
+    .budget-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; margin-bottom: 18px; }
+    .budget-grid .budget { margin-bottom: 0; }
 
     /* CARDS */
     .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(185px, 1fr)); gap: 14px; margin-bottom: 18px; }
@@ -135,7 +137,7 @@
 
 <div class="modal-bg" id="modalBg">
   <div class="modal-box">
-    <h3>Editar presupuesto mensual</h3>
+    <h3 id="modalTitle">Editar presupuesto mensual</h3>
     <input type="number" id="budgetInput" placeholder="Ej: 50000" min="0" />
     <div class="modal-btns">
       <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
@@ -176,7 +178,7 @@
       </div>
     </div>
 
-    <div class="budget">
+    <div class="budget" id="budgetSingle">
       <div class="budget-top">
         <div>
           <div class="b-tag">Presupuesto Mensual</div>
@@ -200,6 +202,8 @@
         <div class="b-meta-item"><span id="metaRem"></span></div>
       </div>
     </div>
+
+    <div class="budget-grid" id="budgetMulti" style="display:none"></div>
 
     <div class="cards">
       <div class="card"><div class="c-lbl">Costo</div><div class="c-val" id="c-costo">—</div></div>
@@ -279,12 +283,14 @@ const account = ACCOUNTS[path];
 
 const PLATFORM_LABEL = { google: 'Google Ads', meta: 'Meta Ads' };
 
+const channels = account ? [...new Set(account.sources.map(s => s.channel))] : [];
+
 if (!account) {
   document.getElementById('loading-txt').textContent = 'Cuenta no encontrada: ' + path;
 } else {
   // Apply accent color
   document.documentElement.style.setProperty('--accent', account.color);
-  const platforms = [...new Set(account.sources.map(s => PLATFORM_LABEL[s.channel] || s.channel))];
+  const platforms = channels.map(c => PLATFORM_LABEL[c] || c);
   const dashTitle = 'Dashboard ' + platforms.join(' + ') + ' — ' + account.name;
   document.title = dashTitle;
 
@@ -294,7 +300,9 @@ if (!account) {
 
 // ─── STATE ────────────────────────────────────────────────────────────────────
 let allRows = [], filtered = [], dateFrom = null, dateTo = null;
-let budget  = 0;
+let budget  = 0;              // presupuesto único (cuentas de 1 solo canal)
+let channelBudgets = {};      // presupuesto por canal (cuentas con Google + Meta)
+let editingChannel = null;    // canal que se está editando en el modal (null = presupuesto único)
 let active  = new Set(['costo', 'conv']);
 let chart   = null;
 
@@ -305,18 +313,32 @@ const NOW        = new Date();
 const CUR_YEAR   = NOW.getFullYear();
 const CUR_MONTH  = NOW.getMonth(); // 0-indexed
 
-function currentMonthCost() {
+function currentMonthCost(channel) {
   return allRows
-    .filter(r => { const d = new Date(r.date + 'T00:00:00'); return d.getFullYear() === CUR_YEAR && d.getMonth() === CUR_MONTH; })
+    .filter(r => {
+      const d = new Date(r.date + 'T00:00:00');
+      return d.getFullYear() === CUR_YEAR && d.getMonth() === CUR_MONTH && (!channel || r.channel === channel);
+    })
     .reduce((s, r) => s + r.cost, 0);
 }
 
 async function loadBudget() {
-  try {
-    const r = await fetch('/api/budget?account=' + accountKey);
-    const { budget: b } = await r.json();
-    budget = b || 0;
-  } catch { budget = 0; }
+  if (channels.length > 1) {
+    const entries = await Promise.all(channels.map(async ch => {
+      try {
+        const r = await fetch('/api/budget?account=' + accountKey + '_' + ch);
+        const { budget: b } = await r.json();
+        return [ch, b || 0];
+      } catch { return [ch, 0]; }
+    }));
+    channelBudgets = Object.fromEntries(entries);
+  } else {
+    try {
+      const r = await fetch('/api/budget?account=' + accountKey);
+      const { budget: b } = await r.json();
+      budget = b || 0;
+    } catch { budget = 0; }
+  }
 }
 
 // ─── BOOT ─────────────────────────────────────────────────────────────────────
@@ -438,6 +460,20 @@ function renderCards() {
 
 // ─── BUDGET ───────────────────────────────────────────────────────────────────
 function renderBudget() {
+  if (channels.length > 1) {
+    document.getElementById('budgetSingle').style.display = 'none';
+    const wrap = document.getElementById('budgetMulti');
+    wrap.style.display = 'grid';
+    wrap.innerHTML = channels.map(ch => budgetCardHTML(ch)).join('');
+    channels.forEach(fillBudgetCard);
+  } else {
+    document.getElementById('budgetSingle').style.display = 'block';
+    document.getElementById('budgetMulti').style.display = 'none';
+    renderSingleBudget();
+  }
+}
+
+function renderSingleBudget() {
   const spent = currentMonthCost(); // siempre el mes actual
   document.getElementById('bSpent').textContent = mxn(spent);
   if (!budget) {
@@ -462,19 +498,85 @@ function renderBudget() {
   document.getElementById('metaRem').textContent = 'Restante: ' + mxn(Math.max(budget - spent, 0));
 }
 
-function openModal()  { document.getElementById('modalBg').style.display = 'flex'; document.getElementById('budgetInput').value = budget || ''; setTimeout(() => document.getElementById('budgetInput').focus(), 50); }
-function closeModal() { document.getElementById('modalBg').style.display = 'none'; }
+// ─── BUDGET (multi-canal: 1 tarjeta por plataforma) ────────────────────────────
+function budgetCardHTML(ch) {
+  const label = PLATFORM_LABEL[ch] || ch;
+  return `
+    <div class="budget">
+      <div class="budget-top">
+        <div>
+          <div class="b-tag">Presupuesto — ${label}</div>
+          <div class="b-note">⚠ Solo considera el gasto del mes actual (${NOW.toLocaleDateString('es-MX', { month: 'long', year: 'numeric' })})</div>
+          <div class="b-amounts">
+            <span class="b-spent" id="bSpent-${ch}">$0</span>
+            <span class="b-of" id="bOf-${ch}">— Sin presupuesto</span>
+          </div>
+        </div>
+        <button class="edit-btn" onclick="openModal('${ch}')" title="Editar presupuesto">✏️</button>
+      </div>
+      <div class="bar-wrap">
+        <div class="bar-spent" id="barSpent-${ch}" style="width:0%"></div>
+        <div class="bar-exp" id="barExp-${ch}" style="left:0%">
+          <span class="bar-exp-lbl" id="barExpLbl-${ch}"></span>
+        </div>
+      </div>
+      <div class="b-meta">
+        <div class="b-meta-item"><div class="meta-dot" style="background:linear-gradient(90deg,var(--accent),#7eb3ff)"></div><span id="metaSpent-${ch}">Gastado: $0</span></div>
+        <div class="b-meta-item"><div class="meta-dot" style="background:#f59e0b"></div><span id="metaExp-${ch}">Esperado hoy: —</span></div>
+        <div class="b-meta-item"><span id="metaRem-${ch}"></span></div>
+      </div>
+    </div>`;
+}
+
+function fillBudgetCard(ch) {
+  const spent = currentMonthCost(ch);
+  const b = channelBudgets[ch] || 0;
+  document.getElementById(`bSpent-${ch}`).textContent = mxn(spent);
+  if (!b) {
+    document.getElementById(`bOf-${ch}`).textContent = '— Sin presupuesto configurado';
+    document.getElementById(`barSpent-${ch}`).style.width = '0%';
+    document.getElementById(`barExp-${ch}`).style.left = '0%';
+    document.getElementById(`barExpLbl-${ch}`).textContent = '';
+    document.getElementById(`metaSpent-${ch}`).textContent = 'Gastado este mes: ' + mxn(spent);
+    document.getElementById(`metaExp-${ch}`).textContent = 'Configura el presupuesto (✏️)';
+    document.getElementById(`metaRem-${ch}`).textContent = '';
+    return;
+  }
+  const days = new Date(CUR_YEAR, CUR_MONTH + 1, 0).getDate();
+  const ep  = NOW.getDate() / days, es = b * ep;
+  const sp  = Math.min((spent / b) * 100, 100), epc = Math.min(ep * 100, 100);
+  document.getElementById(`bOf-${ch}`).textContent = 'de ' + mxn(b) + ' MXN';
+  document.getElementById(`barSpent-${ch}`).style.width = sp + '%';
+  document.getElementById(`barExp-${ch}`).style.left = epc + '%';
+  document.getElementById(`barExpLbl-${ch}`).textContent = 'Esperado';
+  document.getElementById(`metaSpent-${ch}`).textContent = 'Gastado este mes: ' + mxn(spent);
+  document.getElementById(`metaExp-${ch}`).textContent = 'Esperado hoy: ' + mxn(es);
+  document.getElementById(`metaRem-${ch}`).textContent = 'Restante: ' + mxn(Math.max(b - spent, 0));
+}
+
+function openModal(channel) {
+  editingChannel = channel || null;
+  const current = editingChannel ? (channelBudgets[editingChannel] || 0) : budget;
+  document.getElementById('modalTitle').textContent = editingChannel
+    ? 'Editar presupuesto — ' + (PLATFORM_LABEL[editingChannel] || editingChannel)
+    : 'Editar presupuesto mensual';
+  document.getElementById('modalBg').style.display = 'flex';
+  document.getElementById('budgetInput').value = current || '';
+  setTimeout(() => document.getElementById('budgetInput').focus(), 50);
+}
+function closeModal() { document.getElementById('modalBg').style.display = 'none'; editingChannel = null; }
 async function saveBudget() {
   const v = parseFloat(document.getElementById('budgetInput').value);
   if (!isNaN(v) && v >= 0) {
-    budget = v;
+    const acct = editingChannel ? accountKey + '_' + editingChannel : accountKey;
+    if (editingChannel) channelBudgets[editingChannel] = v; else budget = v;
     renderBudget();
     closeModal();
     try {
       await fetch('/api/budget', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ account: accountKey, budget: v }),
+        body: JSON.stringify({ account: acct, budget: v }),
       });
     } catch (e) { console.error('Error guardando presupuesto:', e); }
   } else {
