@@ -147,9 +147,11 @@
     /* UPDATES TAB */
     .updates-tab-layout { display: grid; grid-template-columns: 240px 1fr; gap: 18px; }
     .updates-client-list { display: flex; flex-direction: column; gap: 6px; max-height: 560px; overflow-y: auto; }
-    .updates-client-btn { text-align: left; background: var(--bg-inp); border: 1px solid var(--brd); color: var(--txt); padding: 10px 14px; border-radius: 8px; font-size: 13px; cursor: pointer; font-family: inherit; transition: all .15s; }
+    .updates-client-btn { display: flex; align-items: center; gap: 9px; text-align: left; background: var(--bg-inp); border: 1px solid var(--brd); color: var(--txt); padding: 10px 14px; border-radius: 8px; font-size: 13px; cursor: pointer; font-family: inherit; transition: all .15s; }
     .updates-client-btn:hover { border-color: var(--accent); }
     .updates-client-btn.on { border-color: var(--accent); background: rgba(79,142,247,.08); font-weight: 600; }
+    .uc-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--txt3); flex-shrink: 0; }
+    .update-client { color: var(--accent); font-weight: 600; margin-right: 6px; }
     @media (max-width: 700px) { .updates-tab-layout { grid-template-columns: 1fr; } }
 
     /* BUDGET MODAL */
@@ -322,7 +324,7 @@
     <div id="tabUpdates" style="display:none">
       <div class="table-section">
         <div class="sec-head">
-          <div><h2>Actualizaciones por Cliente</h2><div class="sec-sub2">Selecciona un cliente para ver sus últimas 3 actualizaciones</div></div>
+          <div><h2>Actualizaciones por Cliente</h2><div class="sec-sub2">Selecciona un cliente para ver sus últimas 3 actualizaciones, o "Todas" para ver el resumen de todos</div></div>
         </div>
         <div class="updates-tab-layout">
           <div class="updates-client-list" id="updatesClientList"></div>
@@ -379,6 +381,7 @@ if (!CLIENTS[accountKey]) accountKey = Object.keys(CLIENTS)[0];
 let account = CLIENTS[accountKey];
 
 let allRows = [], filtered = [], dateFrom = null, dateTo = null;
+let clientStatus = {};        // 🟢/🔴 por cliente (gasto desde ayer), key = accountKey
 let budget  = 0;              // presupuesto único (cuentas de 1 solo canal)
 let channelBudgets = {};      // presupuesto por canal (cuentas con Google + Meta)
 let editingChannel = null;    // canal que se está editando en el modal (null = presupuesto único)
@@ -444,12 +447,23 @@ function checkAllClientsStatus() {
         .then(({ rows }) => rows.filter(row => row.date === ys).reduce((s, row) => s + (row.cost || 0), 0))
         .catch(() => 0)
     )).then(results => {
-      const opt = document.getElementById('opt-' + key);
-      if (!opt) return;
       const active = results.reduce((a, b) => a + b, 0) > 0;
-      opt.textContent = (active ? '🟢 ' : '🔴 ') + c.name;
+      clientStatus[key] = active;
+
+      const opt = document.getElementById('opt-' + key);
+      if (opt) opt.textContent = (active ? '🟢 ' : '🔴 ') + c.name;
+
+      applyStatusDot(key, active);
     });
   });
+}
+
+// Pinta el punto de estado de un cliente en la pestaña "Atualizações", si ya está construida
+function applyStatusDot(key, active) {
+  const dot = document.getElementById('ucdot-' + key);
+  if (!dot) return;
+  dot.style.background = active ? '#10b981' : '#ef4444';
+  dot.title = active ? 'Gasto activo' : 'Sin gasto desde ayer';
 }
 
 function applyAccountUI() {
@@ -710,14 +724,22 @@ function buildUpdatesClientList() {
   const box = document.getElementById('updatesClientList');
   if (box.dataset.built) return;
   box.dataset.built = '1';
-  box.innerHTML = Object.entries(CLIENTS).map(([key, c]) =>
-    `<button class="updates-client-btn" id="ucbtn-${key}" onclick="showClientUpdates('${key}')">${c.name}</button>`
+  const allBtn = `<button class="updates-client-btn" id="ucbtn-all" onclick="showAllUpdates()">🗒️ Todas las actualizaciones</button>`;
+  const clientBtns = Object.entries(CLIENTS).map(([key, c]) =>
+    `<button class="updates-client-btn" id="ucbtn-${key}" onclick="showClientUpdates('${key}')"><span class="uc-dot" id="ucdot-${key}" title="Verificando gasto..."></span>${c.name}</button>`
   ).join('');
+  box.innerHTML = allBtn + clientBtns;
+  // Si el estado de los clientes ya se calculó, pinta los puntos de inmediato
+  Object.entries(clientStatus).forEach(([key, active]) => applyStatusDot(key, active));
+}
+
+function setActiveClientBtn(id) {
+  document.querySelectorAll('.updates-client-btn').forEach(b => b.classList.remove('on'));
+  document.getElementById(id).classList.add('on');
 }
 
 async function showClientUpdates(key) {
-  document.querySelectorAll('.updates-client-btn').forEach(b => b.classList.remove('on'));
-  document.getElementById('ucbtn-' + key).classList.add('on');
+  setActiveClientBtn('ucbtn-' + key);
   const detail = document.getElementById('updatesClientDetail');
   detail.innerHTML = '<div class="updates-empty">Cargando...</div>';
   try {
@@ -733,6 +755,31 @@ async function showClientUpdates(key) {
         <div class="update-comment">${escapeHtml(u.comment)}</div>
       </div>
     `).join('') + '</div>';
+  } catch (e) {
+    detail.innerHTML = '<div class="updates-empty">Error al cargar actualizaciones.</div>';
+  }
+}
+
+async function showAllUpdates() {
+  setActiveClientBtn('ucbtn-all');
+  const detail = document.getElementById('updatesClientDetail');
+  detail.innerHTML = '<div class="updates-empty">Cargando...</div>';
+  try {
+    const r = await fetch('/api/updates?limit=30');
+    const { updates } = await r.json();
+    if (!updates.length) {
+      detail.innerHTML = '<div class="updates-empty">Sin actualizaciones registradas.</div>';
+      return;
+    }
+    detail.innerHTML = '<div class="updates-list">' + updates.map(u => {
+      const clientName = (CLIENTS[u.account] && CLIENTS[u.account].name) || u.account;
+      return `
+      <div class="update-item">
+        <div class="update-date">${fmtDateEs(u.date)}</div>
+        <div class="update-comment"><span class="update-client">${escapeHtml(clientName)}</span>${escapeHtml(u.comment)}</div>
+      </div>
+    `;
+    }).join('') + '</div>';
   } catch (e) {
     detail.innerHTML = '<div class="updates-empty">Error al cargar actualizaciones.</div>';
   }
