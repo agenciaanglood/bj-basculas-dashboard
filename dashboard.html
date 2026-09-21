@@ -60,6 +60,11 @@
     .date-inp { background: var(--bg-inp); border: 1px solid var(--brd); color: var(--txt); padding: 7px 12px; border-radius: 8px; font-size: 13px; font-family: inherit; }
     .date-inp:focus { outline: none; border-color: var(--accent); }
 
+    /* SPEND ALERT */
+    .alert-banner { display: flex; align-items: center; gap: 10px; background: rgba(239,68,68,.1); border: 1px solid rgba(239,68,68,.35); color: #fca5a5; padding: 13px 18px; border-radius: 12px; margin-bottom: 18px; font-size: 13px; }
+    .alert-banner .a-icon { font-size: 16px; flex-shrink: 0; }
+    .alert-banner strong { color: #fff; }
+
     /* BUDGET */
     .budget { background: var(--bg-card); border: 1px solid var(--brd); border-radius: 14px; padding: 22px 26px; margin-bottom: 18px; }
     .budget-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 16px; }
@@ -177,6 +182,8 @@
         <input type="date" class="date-inp" id="dateTo" onchange="applyCustom()" />
       </div>
     </div>
+
+    <div class="alert-banner" id="spendAlert" style="display:none"></div>
 
     <div class="budget" id="budgetSingle">
       <div class="budget-top">
@@ -401,7 +408,42 @@ function applyCustom() {
 function apply() {
   if (!dateFrom || !dateTo) return;
   filtered = allRows.filter(r => { const d = new Date(r.date + 'T00:00:00'); return d >= dateFrom && d <= dateTo; });
-  renderCards(); renderBudget(); renderChart(); renderTable();
+  renderCards(); renderBudget(); renderChart(); renderTable(); renderSpendAlert();
+}
+
+// ─── SPEND ALERT (sin gasto desde ayer) ─────────────────────────────────────────
+function yesterdayStr() {
+  const y = new Date(); y.setDate(y.getDate() - 1);
+  return y.toISOString().slice(0, 10);
+}
+
+function fmtDateEs(dateStr) {
+  return new Date(dateStr + 'T00:00:00').toLocaleDateString('es-MX', { day: 'numeric', month: 'long' });
+}
+
+function renderSpendAlert() {
+  const box = document.getElementById('spendAlert');
+  const ys  = yesterdayStr();
+  if (channels.length > 1) {
+    const stopped = channels.filter(ch =>
+      allRows.filter(r => r.date === ys && r.channel === ch).reduce((s, r) => s + r.cost, 0) <= 0
+    );
+    if (stopped.length) {
+      box.style.display = 'flex';
+      const labels = stopped.map(ch => PLATFORM_LABEL[ch] || ch).join(' y ');
+      box.innerHTML = `<span class="a-icon">⚠️</span> Sin gasto registrado desde ayer (${fmtDateEs(ys)}) en: <strong>${labels}</strong>.`;
+    } else {
+      box.style.display = 'none';
+    }
+  } else {
+    const spent = allRows.filter(r => r.date === ys).reduce((s, r) => s + r.cost, 0);
+    if (spent <= 0) {
+      box.style.display = 'flex';
+      box.innerHTML = `<span class="a-icon">⚠️</span> Este cliente no registró gasto desde ayer (${fmtDateEs(ys)}).`;
+    } else {
+      box.style.display = 'none';
+    }
+  }
 }
 
 // ─── AGGREGATION ──────────────────────────────────────────────────────────────

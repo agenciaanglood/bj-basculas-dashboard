@@ -73,6 +73,13 @@
       display: flex; align-items: center; justify-content: center;
       font-size: 16px; font-weight: 700;
     }
+    .c-top { display: flex; align-items: center; justify-content: space-between; }
+    .status-dot {
+      width: 10px; height: 10px; border-radius: 50%;
+      background: var(--txt3); flex-shrink: 0;
+      box-shadow: 0 0 0 3px rgba(255,255,255,.03);
+      transition: background .2s ease;
+    }
     .c-name { font-size: 16px; font-weight: 600; letter-spacing: -.2px; }
     .c-sub { font-size: 12px; color: var(--txt2); margin-top: 3px; }
     .c-arrow {
@@ -104,18 +111,18 @@
 
 <script>
   const ACCOUNTS = [
-    { route: '/bjbasculas',    name: 'BJ Básculas',   subtitle: 'Google Ads · México',          color: '#4f8ef7' },
-    { route: '/gmmuebles',     name: 'GM Muebles',    subtitle: 'Google Ads · México',          color: '#10b981' },
-    { route: '/drmiguel',      name: 'Miguel Barnes', subtitle: 'Google Ads · Clínica',         color: '#8b5cf6' },
-    { route: '/servimex',      name: 'Servimex',      subtitle: 'Google Ads · México',          color: '#f59e0b' },
-    { route: '/dentalimplant', name: 'Dentarte TJ',   subtitle: 'Google Ads · Clínica',         color: '#06b6d4' },
-    { route: '/segomuebles',   name: 'Sego Muebles',  subtitle: 'Google Ads · México',          color: '#f472b6' },
-    { route: '/poltech',       name: 'Poltech',       subtitle: 'Google Ads · México',          color: '#f97316' },
-    { route: '/qrwork',        name: 'QrWork',        subtitle: 'Google Ads + Meta Ads · México', color: '#14b8a6' },
-    { route: '/pieleruedas',   name: 'Piel & Ruedas', subtitle: 'Meta Ads · México',            color: '#10b981' },
-    { route: '/realty',        name: 'Realty',        subtitle: 'Meta Ads · México',            color: '#6366f1' },
-    { route: '/labpetrone',    name: 'Laboratorio Petrone', subtitle: 'Google Ads · Laboratorio', color: '#eab308' },
-    { route: '/drsaab',        name: 'Dr Saab Karam',      subtitle: 'Google Ads · Clínica',     color: '#d946ef' },
+    { route: '/bjbasculas',    name: 'BJ Básculas',   subtitle: 'Google Ads · México',          color: '#4f8ef7', sources: [{ sheet: 'BJ BASCULAS - Google',     channel: 'google' }] },
+    { route: '/gmmuebles',     name: 'GM Muebles',    subtitle: 'Google Ads · México',          color: '#10b981', sources: [{ sheet: 'GM Muebles - Google',      channel: 'google' }] },
+    { route: '/drmiguel',      name: 'Miguel Barnes', subtitle: 'Google Ads · Clínica',         color: '#8b5cf6', sources: [{ sheet: 'Miguel Barnes - Google',   channel: 'google' }] },
+    { route: '/servimex',      name: 'Servimex',      subtitle: 'Google Ads · México',          color: '#f59e0b', sources: [{ sheet: 'Servimex - Google',        channel: 'google' }] },
+    { route: '/dentalimplant', name: 'Dentarte TJ',   subtitle: 'Google Ads · Clínica',         color: '#06b6d4', sources: [{ sheet: 'Dentarte TJ - Google',     channel: 'google' }] },
+    { route: '/segomuebles',   name: 'Sego Muebles',  subtitle: 'Google Ads · México',          color: '#f472b6', sources: [{ sheet: 'Sego Muebles - Google',    channel: 'google' }] },
+    { route: '/poltech',       name: 'Poltech',       subtitle: 'Google Ads · México',          color: '#f97316', sources: [{ sheet: 'Poltech - Google',         channel: 'google' }] },
+    { route: '/qrwork',        name: 'QrWork',        subtitle: 'Google Ads + Meta Ads · México', color: '#14b8a6', sources: [{ sheet: 'QrWork - Google', channel: 'google' }, { sheet: 'QrWork - Facebook', channel: 'meta' }] },
+    { route: '/pieleruedas',   name: 'Piel & Ruedas', subtitle: 'Meta Ads · México',            color: '#10b981', sources: [{ sheet: 'Piel e Ruedas - Facebook', channel: 'meta' }] },
+    { route: '/realty',        name: 'Realty',        subtitle: 'Meta Ads · México',            color: '#6366f1', sources: [{ sheet: 'Realty - Facebook',        channel: 'meta' }] },
+    { route: '/labpetrone',    name: 'Laboratorio Petrone', subtitle: 'Google Ads · Laboratorio', color: '#eab308', sources: [{ sheet: 'Laboratorio Petrone - Google', channel: 'google' }] },
+    { route: '/drsaab',        name: 'Dr Saab Karam',      subtitle: 'Google Ads · Clínica',     color: '#d946ef', sources: [{ sheet: 'Dr Saab Karam - Google',      channel: 'google' }] },
   ];
 
   const grid = document.getElementById('grid');
@@ -125,7 +132,10 @@
     a.className = 'card';
     a.style.setProperty('--accent', color);
     a.innerHTML = `
-      <div class="c-icon">${name.trim().charAt(0)}</div>
+      <div class="c-top">
+        <div class="c-icon">${name.trim().charAt(0)}</div>
+        <div class="status-dot" id="dot-${route.slice(1)}" title="Verificando gasto..."></div>
+      </div>
       <div>
         <div class="c-name">${name}</div>
         <div class="c-sub">${subtitle}</div>
@@ -133,6 +143,33 @@
       <div class="c-arrow">Ver dashboard →</div>
     `;
     grid.appendChild(a);
+  });
+
+  // ─── Estado de gasto (🟢 activo / 🔴 sin gasto desde ayer) ───────────────────
+  function yesterdayStr() {
+    const y = new Date(); y.setDate(y.getDate() - 1);
+    return y.toISOString().slice(0, 10);
+  }
+
+  const ys = yesterdayStr();
+  ACCOUNTS.forEach(({ route, sources }) => {
+    Promise.all(sources.map(src =>
+      fetch('/api/data?sheet=' + encodeURIComponent(src.sheet) + '&channel=' + src.channel)
+        .then(r => r.json())
+        .then(({ rows }) => rows.filter(row => row.date === ys).reduce((s, row) => s + (row.cost || 0), 0))
+        .catch(() => null)
+    )).then(results => {
+      const dot = document.getElementById('dot-' + route.slice(1));
+      if (!dot) return;
+      if (results.some(r => r === null)) {
+        dot.style.background = 'var(--txt3)';
+        dot.title = 'No se pudo verificar el gasto';
+        return;
+      }
+      const active = results.reduce((a, b) => a + b, 0) > 0;
+      dot.style.background = active ? '#10b981' : '#ef4444';
+      dot.title = active ? 'Gasto activo' : 'Sin gasto desde ayer';
+    });
   });
 </script>
 
