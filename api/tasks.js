@@ -15,12 +15,13 @@ const KINDS = {
   },
   templates: {
     title: 'Plantillas',
-    header: ['id', 'Nombre', 'Tareas (JSON)', 'Creada'],
-    createdIdx: 3,
-    lastCol: 'D',
-    toRow: (o, id, created) => [id, o.name || '', JSON.stringify(o.items || []), created],
-    fromRow: r => ({ id: r[0] || '', name: r[1] || '', items: safeParse(r[2]) }),
-    valid: o => !!(o && o.name && Array.isArray(o.items) && o.items.length),
+    // Modelo = UNA tarea reutilizable (nombre, descripción, checklist, días para el límite, responsable)
+    header: ['id', 'Nombre', 'Descripción', 'Checklist (JSON)', 'Días límite', 'Responsable', 'Creada'],
+    createdIdx: 6,
+    lastCol: 'G',
+    toRow: (o, id, created) => [id, o.name || '', o.description || '', JSON.stringify(Array.isArray(o.checklist) ? o.checklist : []), o.days === '' || o.days == null ? '' : Number(o.days), o.assignee || '', created],
+    fromRow: r => ({ id: r[0] || '', name: r[1] || '', description: r[2] || '', checklist: safeParse(r[3]), days: r[4] === undefined || r[4] === '' ? '' : Number(r[4]), assignee: r[5] || '' }),
+    valid: o => !!(o && o.name),
   },
 };
 

@@ -401,7 +401,7 @@
           <option value="concluida">Concluidas</option>
         </select>
         <span class="tk-spacer"></span>
-        <button class="btn-cancel" onclick="openTplManager()">📋 Plantillas</button>
+        <button class="btn-cancel" onclick="openModelsManager()">📋 Modelos</button>
         <button class="btn-save" onclick="openTaskModal()">＋ Nueva tarea</button>
       </div>
       <div class="kanban">
@@ -423,65 +423,43 @@
 <div class="modal-bg" id="taskModalBg">
   <div class="modal-box modal-task">
     <h3 id="taskModalTitle">Nueva tarea</h3>
+    <div class="fld" id="tkModelPick" style="display:none"><label>Usar un modelo</label><select id="tkModelSel" onchange="applyModelToForm(this.value)"></select></div>
     <div class="fld"><label>Tarea</label><input type="text" id="tkName" placeholder="¿Qué hay que hacer?" /></div>
     <div class="fld"><label>Descripción</label><textarea id="tkDesc" rows="4" placeholder="Detalles, contexto, links…"></textarea></div>
     <div class="fld-row3">
-      <div class="fld"><label>Cliente</label><select id="tkClient"></select></div>
+      <div class="fld tk-only"><label>Cliente</label><select id="tkClient"></select></div>
       <div class="fld"><label>Responsable</label><input type="text" id="tkAssignee" list="tkAssigneeList" placeholder="Nombre" /><datalist id="tkAssigneeList"></datalist></div>
-      <div class="fld"><label>Estado</label>
+      <div class="fld tk-only"><label>Estado</label>
         <select id="tkStatus"><option value="abierta">Abierta</option><option value="concluida">Concluida</option></select>
       </div>
     </div>
-    <div class="fld-row">
+    <div class="fld-row tk-only">
       <div class="fld"><label>Fecha solicitada</label><input type="date" id="tkRequested" /></div>
       <div class="fld"><label>Fecha límite</label><input type="date" id="tkDue" /></div>
     </div>
+    <div class="fld model-only" style="display:none"><label>Días para la fecha límite</label><input type="number" min="0" id="tkDays" placeholder="Ej: 7 (vacío = sin fecha límite)" /></div>
     <div class="fld">
       <label>Checklist <span id="tkChkProgress" style="text-transform:none;letter-spacing:0;color:var(--txt3)"></span></label>
       <div id="tkChecklist"></div>
       <button class="btn-cancel" onclick="addChecklistItem()" style="margin-top:2px">＋ Agregar ítem</button>
     </div>
     <div class="modal-btns">
+      <button class="btn-cancel" id="tkSaveModelBtn" onclick="saveAsModel()" style="margin-right:auto">💾 Guardar como modelo</button>
       <button class="btn-cancel" onclick="closeTaskModal()">Cancelar</button>
       <button class="btn-save" onclick="saveTask()">Guardar</button>
     </div>
   </div>
 </div>
 
-<!-- Modal: plantillas (lista + editor + aplicar) -->
-<div class="modal-bg" id="tplModalBg">
+<!-- Modal: modelos de tarea (lista) -->
+<div class="modal-bg" id="modelsModalBg">
   <div class="modal-box modal-wide">
-    <div id="tplListView">
-      <h3>Plantillas de tareas</h3>
-      <p class="tpl-hint">Un grupo de tareas reutilizable. Al aplicarlo a un cliente se crean todas sus tareas automáticamente.</p>
-      <div id="tplList"></div>
-      <div class="modal-btns" style="margin-top:14px">
-        <button class="btn-cancel" onclick="closeTplModal()">Cerrar</button>
-        <button class="btn-save" onclick="openTplEditor()">＋ Nueva plantilla</button>
-      </div>
-    </div>
-    <div id="tplEditView" style="display:none">
-      <h3 id="tplEditTitle">Nueva plantilla</h3>
-      <div class="fld"><label>Nombre de la plantilla</label><input type="text" id="tplName" placeholder='Ej: Nuevo Cliente' /></div>
-      <div class="fld">
-        <label>Tareas</label>
-        <p class="tpl-hint">Cada tarea: descripción · días para el límite · responsable (opcional)</p>
-        <div id="tplItems"></div>
-        <button class="btn-cancel" onclick="addTplItem()" style="margin-top:4px">＋ Agregar tarea</button>
-      </div>
-      <div class="modal-btns">
-        <button class="btn-cancel" onclick="showTplList()">Volver</button>
-        <button class="btn-save" onclick="saveTpl()">Guardar plantilla</button>
-      </div>
-    </div>
-    <div id="tplApplyView" style="display:none">
-      <h3 id="tplApplyTitle">Aplicar plantilla</h3>
-      <p class="tpl-hint" id="tplApplyInfo"></p>
-      <div class="fld"><label>Cliente</label><select id="tplApplyClient"></select></div>
-      <div class="modal-btns">
-        <button class="btn-cancel" onclick="showTplList()">Volver</button>
-        <button class="btn-save" onclick="applyTpl()">Crear tareas</button>
-      </div>
+    <h3>Modelos de tarea</h3>
+    <p class="tpl-hint">Guarda una tarea como modelo para reutilizarla sin volver a escribirla. En “Nueva tarea” puedes elegir un modelo o guardar la tarea actual como modelo.</p>
+    <div id="modelList"></div>
+    <div class="modal-btns" style="margin-top:14px">
+      <button class="btn-cancel" onclick="closeModelsModal()">Cerrar</button>
+      <button class="btn-save" onclick="openModelEditor()">＋ Nuevo modelo</button>
     </div>
   </div>
 </div>
@@ -892,8 +870,8 @@ function switchTab(tab) {
 }
 
 // ─── TAREAS (KANBAN) + PLANTILLAS ────────────────────────────────────────────
-let tasks = [], templates = [], editingTaskId = null, editingTplId = null, applyingTplId = null;
-let tplDraft = [], genConfirmCb = null;
+let tasks = [], templates = [], editingTaskId = null;
+let genConfirmCb = null;
 
 const todayStr = () => new Date().toISOString().slice(0, 10);
 const addDays  = n => { const d = new Date(); d.setDate(d.getDate() + n); return d.toISOString().slice(0, 10); };
@@ -996,9 +974,12 @@ async function setTaskStatus(t, status) {
 const toggleTask = id => { const t = tasks.find(x => x.id === id); if (t) setTaskStatus(t, t.status === 'concluida' ? 'abierta' : 'concluida'); };
 
 // ── Modal de tarea ──
-function openTaskModal(id) {
+function openTaskModal(id, modelId) {
   const t = id ? tasks.find(x => x.id === id) : null;
   editingTaskId = t ? t.id : null;
+  editingModelId = null;
+  setTaskMode('task');
+  populateModelSel(modelId);
   fillSelect(document.getElementById('tkClient'), Object.entries(CLIENTS).map(([k, c]) => [k, c.name]));
   const fcl = document.getElementById('tkFClient').value;
   document.getElementById('taskModalTitle').textContent = t ? 'Editar tarea' : 'Nueva tarea';
@@ -1011,10 +992,11 @@ function openTaskModal(id) {
   document.getElementById('tkDesc').value      = t ? (t.description || '') : '';
   tkChecklist = t ? (t.checklist || []).map(i => ({ ...i })) : [];
   renderChecklist();
+  if (modelId && !t) applyModelToForm(modelId);
   document.getElementById('taskModalBg').style.display = 'flex';
   setTimeout(() => document.getElementById('tkName').focus(), 50);
 }
-function closeTaskModal() { document.getElementById('taskModalBg').style.display = 'none'; editingTaskId = null; }
+function closeTaskModal() { document.getElementById('taskModalBg').style.display = 'none'; editingTaskId = null; editingModelId = null; }
 
 let tkChecklist = [];
 function renderChecklist(focusLast) {
@@ -1032,6 +1014,7 @@ function renderChecklist(focusLast) {
 function addChecklistItem() { tkChecklist.push({ text: '', done: false }); renderChecklist(true); }
 
 async function saveTask() {
+  if (taskMode === 'model') return saveModel();
   const o = {
     name: document.getElementById('tkName').value.trim(),
     requested: document.getElementById('tkRequested').value,
@@ -1068,93 +1051,125 @@ function deleteTask(id) {
   });
 }
 
-// ── Plantillas ──
-function openTplManager() { renderTplList(); showTplList(); document.getElementById('tplModalBg').style.display = 'flex'; }
-function closeTplModal() { document.getElementById('tplModalBg').style.display = 'none'; }
-function showTplView(v) {
-  ['tplListView', 'tplEditView', 'tplApplyView'].forEach(id => document.getElementById(id).style.display = id === v ? 'block' : 'none');
-}
-function showTplList() { renderTplList(); showTplView('tplListView'); }
+// ── Modelos de tarea (una tarea reutilizable) ──
+let taskMode = 'task', editingModelId = null;
 
-function renderTplList() {
-  document.getElementById('tplList').innerHTML = templates.length ? templates.map(p => `
-    <div class="tpl-item">
-      <div class="tpl-info"><div class="tpl-name">${escapeHtml(p.name)}</div><div class="tpl-sub">${p.items.length} tarea${p.items.length === 1 ? '' : 's'}</div></div>
-      <button class="btn-save" style="padding:7px 12px;font-size:12px" onclick="openTplApply('${p.id}')">Aplicar</button>
-      <button class="update-icon-btn" onclick="openTplEditor('${p.id}')" title="Editar">✏️</button>
-      <button class="update-icon-btn" onclick="deleteTpl('${p.id}')" title="Eliminar">🗑️</button>
-    </div>`).join('') : '<div class="tk-empty">Aún no hay plantillas. Crea la primera con “Nueva plantilla”.</div>';
+function setTaskMode(mode) {
+  taskMode = mode;
+  const isModel = mode === 'model';
+  document.querySelectorAll('#taskModalBg .tk-only').forEach(e => e.style.display = isModel ? 'none' : '');
+  document.querySelectorAll('#taskModalBg .model-only').forEach(e => e.style.display = isModel ? '' : 'none');
+  document.getElementById('tkModelPick').style.display = (!isModel && !editingTaskId && templates.length) ? '' : 'none';
+  document.getElementById('tkSaveModelBtn').style.display = isModel ? 'none' : '';
 }
 
-function renderTplItems() {
-  document.getElementById('tplItems').innerHTML = tplDraft.map((it, i) => `
-    <div class="tpl-row">
-      <input type="text" placeholder="Descripción de la tarea" value="${escapeHtml(it.name)}" oninput="tplDraft[${i}].name=this.value" />
-      <input type="number" min="0" placeholder="Días" value="${it.days ?? ''}" oninput="tplDraft[${i}].days=this.value" title="Días para la fecha límite" />
-      <input type="text" placeholder="Responsable" value="${escapeHtml(it.assignee || '')}" oninput="tplDraft[${i}].assignee=this.value" />
-      <button class="tpl-rm" onclick="tplDraft.splice(${i},1);renderTplItems()" title="Quitar">✕</button>
-    </div>`).join('');
-}
-function addTplItem() { tplDraft.push({ name: '', days: 7, assignee: '' }); renderTplItems(); }
-
-function openTplEditor(id) {
-  const p = id ? templates.find(x => x.id === id) : null;
-  editingTplId = p ? p.id : null;
-  tplDraft = p ? p.items.map(i => ({ ...i })) : [{ name: '', days: 7, assignee: '' }];
-  document.getElementById('tplEditTitle').textContent = p ? 'Editar plantilla' : 'Nueva plantilla';
-  document.getElementById('tplName').value = p ? p.name : '';
-  renderTplItems();
-  showTplView('tplEditView');
+function populateModelSel(selected) {
+  fillSelect(document.getElementById('tkModelSel'), [['', 'Elegir un modelo…'], ...templates.map(m => [m.id, m.name])], selected || '');
 }
 
-async function saveTpl() {
-  const name = document.getElementById('tplName').value.trim();
-  const items = tplDraft.filter(i => i.name.trim()).map(i => ({ name: i.name.trim(), days: i.days === '' || i.days == null ? '' : Number(i.days), assignee: (i.assignee || '').trim() }));
-  if (!name) { document.getElementById('tplName').focus(); return; }
-  if (!items.length) { alert('Agrega al menos una tarea a la plantilla.'); return; }
+function applyModelToForm(id) {
+  const m = templates.find(x => x.id === id);
+  if (!m) return;
+  document.getElementById('tkName').value     = m.name;
+  document.getElementById('tkDesc').value     = m.description || '';
+  document.getElementById('tkAssignee').value = m.assignee || '';
+  document.getElementById('tkDue').value      = m.days === '' ? '' : addDays(Number(m.days));
+  tkChecklist = (m.checklist || []).map(i => ({ text: i.text, done: false }));
+  renderChecklist();
+}
+
+function modelFromForm() {
+  let days = '';
+  if (taskMode === 'model') {
+    const v = document.getElementById('tkDays').value;
+    days = v === '' ? '' : Number(v);
+  } else {
+    const req = document.getElementById('tkRequested').value, due = document.getElementById('tkDue').value;
+    if (req && due) days = Math.max(0, Math.round((new Date(due) - new Date(req)) / 86400000));
+  }
+  return {
+    name: document.getElementById('tkName').value.trim(),
+    description: document.getElementById('tkDesc').value.trim(),
+    assignee: document.getElementById('tkAssignee').value.trim(),
+    days,
+    checklist: tkChecklist.filter(i => (i.text || '').trim()).map(i => ({ text: i.text.trim(), done: false })),
+  };
+}
+
+// Guarda la tarea que se está escribiendo como modelo (mismo nombre = actualiza el modelo)
+async function saveAsModel() {
+  const m = modelFromForm();
+  if (!m.name) { document.getElementById('tkName').focus(); return; }
+  const dup = templates.find(x => x.name.toLowerCase() === m.name.toLowerCase());
+  const btn = document.getElementById('tkSaveModelBtn');
   try {
-    if (editingTplId) await tkApi('templates', 'PUT', { id: editingTplId, name, items });
-    else await tkApi('templates', 'POST', { name, items });
+    if (dup) await tkApi('templates', 'PUT', { ...m, id: dup.id });
+    else await tkApi('templates', 'POST', m);
     await loadTasks();
-    showTplList();
-  } catch (e) { alert('No se pudo guardar la plantilla: ' + e.message); }
+    populateModelSel();
+    btn.textContent = dup ? '✔ Modelo actualizado' : '✔ Modelo guardado';
+    setTimeout(() => { btn.textContent = '💾 Guardar como modelo'; }, 1800);
+  } catch (e) { alert('No se pudo guardar el modelo: ' + e.message); }
 }
 
-function deleteTpl(id) {
-  askConfirm('Eliminar plantilla', 'Las tareas ya creadas a partir de ella no se borran. ¿Eliminar la plantilla?', async () => {
-    try { await tkApi('templates', 'DELETE', null, '&id=' + encodeURIComponent(id)); await loadTasks(); renderTplList(); }
+async function saveModel() {
+  const m = modelFromForm();
+  if (!m.name) { document.getElementById('tkName').focus(); return; }
+  try {
+    if (editingModelId) await tkApi('templates', 'PUT', { ...m, id: editingModelId });
+    else await tkApi('templates', 'POST', m);
+    closeTaskModal();
+    await loadTasks();
+    openModelsManager();
+  } catch (e) { alert('No se pudo guardar el modelo: ' + e.message); }
+}
+
+function openModelsManager() { renderModelList(); document.getElementById('modelsModalBg').style.display = 'flex'; }
+function closeModelsModal() { document.getElementById('modelsModalBg').style.display = 'none'; }
+
+function renderModelList() {
+  document.getElementById('modelList').innerHTML = templates.length ? templates.map(m => {
+    const bits = [];
+    if (m.assignee) bits.push('👤 ' + escapeHtml(m.assignee));
+    if (m.days !== '') bits.push('límite +' + m.days + ' días');
+    if ((m.checklist || []).length) bits.push('☑ ' + m.checklist.length + ' ítems');
+    return `
+    <div class="tpl-item">
+      <div class="tpl-info"><div class="tpl-name">${escapeHtml(m.name)}</div><div class="tpl-sub">${bits.join(' · ') || 'Sin detalles'}</div></div>
+      <button class="btn-save" style="padding:7px 12px;font-size:12px" onclick="useModel('${m.id}')">Usar</button>
+      <button class="update-icon-btn" onclick="openModelEditor('${m.id}')" title="Editar">✏️</button>
+      <button class="update-icon-btn" onclick="deleteModel('${m.id}')" title="Eliminar">🗑️</button>
+    </div>`;
+  }).join('') : '<div class="tk-empty">Aún no hay modelos. Crea una tarea y usa “Guardar como modelo”, o crea uno aquí.</div>';
+}
+
+function useModel(id) { closeModelsModal(); openTaskModal(null, id); }
+
+function openModelEditor(id) {
+  const m = id ? templates.find(x => x.id === id) : null;
+  editingModelId = m ? m.id : null;
+  editingTaskId = null;
+  closeModelsModal();
+  setTaskMode('model');
+  document.getElementById('taskModalTitle').textContent = m ? 'Editar modelo' : 'Nuevo modelo';
+  document.getElementById('tkName').value     = m ? m.name : '';
+  document.getElementById('tkDesc').value     = m ? (m.description || '') : '';
+  document.getElementById('tkAssignee').value = m ? (m.assignee || '') : '';
+  document.getElementById('tkDays').value     = m && m.days !== '' ? m.days : '';
+  tkChecklist = m ? (m.checklist || []).map(i => ({ text: i.text, done: false })) : [];
+  renderChecklist();
+  document.getElementById('taskModalBg').style.display = 'flex';
+  setTimeout(() => document.getElementById('tkName').focus(), 50);
+}
+
+function deleteModel(id) {
+  askConfirm('Eliminar modelo', 'Las tareas ya creadas a partir de él no se borran. ¿Eliminar el modelo?', async () => {
+    try { await tkApi('templates', 'DELETE', null, '&id=' + encodeURIComponent(id)); await loadTasks(); renderModelList(); }
     catch (e) { alert('No se pudo eliminar: ' + e.message); }
   });
 }
 
-function openTplApply(id) {
-  const p = templates.find(x => x.id === id);
-  if (!p) return;
-  applyingTplId = id;
-  document.getElementById('tplApplyTitle').textContent = 'Aplicar “' + p.name + '”';
-  document.getElementById('tplApplyInfo').textContent = 'Se crearán ' + p.items.length + ' tarea' + (p.items.length === 1 ? '' : 's') + ' abiertas para el cliente elegido.';
-  fillSelect(document.getElementById('tplApplyClient'), Object.entries(CLIENTS).map(([k, c]) => [k, c.name]));
-  document.getElementById('tplApplyClient').value = document.getElementById('tkFClient').value || accountKey;
-  showTplView('tplApplyView');
-}
-
-async function applyTpl() {
-  const p = templates.find(x => x.id === applyingTplId);
-  const client = document.getElementById('tplApplyClient').value;
-  if (!p || !client) return;
-  const batch = p.items.map(i => ({
-    name: i.name, requested: todayStr(), due: i.days === '' || i.days == null ? '' : addDays(Number(i.days)),
-    assignee: i.assignee || '', client, status: 'abierta',
-  }));
-  try {
-    await tkApi('tasks', 'POST', { tasks: batch });
-    closeTplModal();
-    document.getElementById('tkFClient').value = client;
-    await loadTasks();
-  } catch (e) { alert('No se pudieron crear las tareas: ' + e.message); }
-}
-
-['taskModalBg', 'tplModalBg', 'genConfirmBg'].forEach(id => {
+['taskModalBg', 'modelsModalBg', 'genConfirmBg'].forEach(id => {
   document.getElementById(id).addEventListener('click', e => { if (e.target.id === id) document.getElementById(id).style.display = 'none'; });
 });
 
