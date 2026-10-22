@@ -6,14 +6,18 @@ function safeParse(s) { try { const v = JSON.parse(s); return Array.isArray(v) ?
 const KINDS = {
   tasks: {
     title: 'Tareas',
-    header: ['id', 'Tarea', 'Solicitada', 'Límite', 'Responsable', 'Cliente', 'Estado', 'Creada'],
-    toRow: (o, id, created) => [id, o.name || '', o.requested || '', o.due || '', o.assignee || '', o.client || '', o.status === 'concluida' ? 'concluida' : 'abierta', created],
-    fromRow: r => ({ id: r[0] || '', name: r[1] || '', requested: r[2] || '', due: r[3] || '', assignee: r[4] || '', client: r[5] || '', status: r[6] === 'concluida' ? 'concluida' : 'abierta' }),
+    header: ['id', 'Tarea', 'Solicitada', 'Límite', 'Responsable', 'Cliente', 'Estado', 'Creada', 'Descripción', 'Checklist (JSON)'],
+    createdIdx: 7,
+    lastCol: 'J',
+    toRow: (o, id, created) => [id, o.name || '', o.requested || '', o.due || '', o.assignee || '', o.client || '', o.status === 'concluida' ? 'concluida' : 'abierta', created, o.description || '', JSON.stringify(Array.isArray(o.checklist) ? o.checklist : [])],
+    fromRow: r => ({ id: r[0] || '', name: r[1] || '', requested: r[2] || '', due: r[3] || '', assignee: r[4] || '', client: r[5] || '', status: r[6] === 'concluida' ? 'concluida' : 'abierta', description: r[8] || '', checklist: safeParse(r[9]) }),
     valid: o => !!(o && o.name && o.client),
   },
   templates: {
     title: 'Plantillas',
     header: ['id', 'Nombre', 'Tareas (JSON)', 'Creada'],
+    createdIdx: 3,
+    lastCol: 'D',
     toRow: (o, id, created) => [id, o.name || '', JSON.stringify(o.items || []), created],
     fromRow: r => ({ id: r[0] || '', name: r[1] || '', items: safeParse(r[2]) }),
     valid: o => !!(o && o.name && Array.isArray(o.items) && o.items.length),
@@ -57,7 +61,7 @@ async function ensureSheet(sheetId, token, cfg) {
 }
 
 async function getRows(sheetId, token, cfg) {
-  const r = await fetch(`${base(sheetId)}/values/${encodeURIComponent(cfg.title + '!A:H')}`, { headers: { Authorization: `Bearer ${token}` } });
+  const r = await fetch(`${base(sheetId)}/values/${encodeURIComponent(cfg.title + '!A:J')}`, { headers: { Authorization: `Bearer ${token}` } });
   const data = await r.json();
   return data.values || [];
 }
@@ -100,7 +104,7 @@ export default async function handler(req, res) {
       await ensureSheet(sheetId, token, cfg);
       const created = new Date().toISOString();
       const values  = list.map(o => cfg.toRow(o, newId(), created));
-      await fetch(`${base(sheetId)}/values/${encodeURIComponent(cfg.title + '!A:H')}:append?valueInputOption=RAW`, {
+      await fetch(`${base(sheetId)}/values/${encodeURIComponent(cfg.title + '!A:J')}:append?valueInputOption=RAW`, {
         method: 'POST', headers: auth, body: JSON.stringify({ values }),
       });
       return res.status(200).json({ ok: true, count: values.length });
@@ -112,8 +116,8 @@ export default async function handler(req, res) {
       const rows   = await getRows(sheetId, token, cfg);
       const rowIdx = rows.findIndex(r => r[0] === o.id);
       if (rowIdx === -1) return res.status(404).json({ error: 'no encontrado' });
-      const created = rows[rowIdx][cfg.header.length - 1] || new Date().toISOString();
-      const range   = encodeURIComponent(`${cfg.title}!A${rowIdx + 1}:${cfg.header.length === 8 ? 'H' : 'D'}${rowIdx + 1}`);
+      const created = rows[rowIdx][cfg.createdIdx] || new Date().toISOString();
+      const range   = encodeURIComponent(`${cfg.title}!A${rowIdx + 1}:${cfg.lastCol}${rowIdx + 1}`);
       await fetch(`${base(sheetId)}/values/${range}?valueInputOption=RAW`, {
         method: 'PUT', headers: auth, body: JSON.stringify({ values: [cfg.toRow(o, o.id, created)] }),
       });

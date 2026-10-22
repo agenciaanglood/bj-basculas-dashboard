@@ -186,6 +186,16 @@
     .modal-box select { width: 100%; background: var(--bg-inp); border: 1px solid var(--brd); color: var(--txt); padding: 11px 14px; border-radius: 9px; font-size: 14px; font-family: inherit; }
     .modal-box select:focus { outline: none; border-color: var(--accent); }
     .fld-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .fld-row3 { display: grid; grid-template-columns: 1.3fr 1fr 1fr; gap: 12px; }
+    .modal-task { width: 720px; max-width: 94vw; max-height: 92vh; overflow-y: auto; padding: 28px 32px; }
+    .modal-box textarea { width: 100%; background: var(--bg-inp); border: 1px solid var(--brd); color: var(--txt); padding: 11px 14px; border-radius: 9px; font-size: 14px; font-family: inherit; resize: vertical; min-height: 90px; line-height: 1.45; }
+    .modal-box textarea:focus { outline: none; border-color: var(--accent); }
+    .chk-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+    .chk-row input[type=checkbox] { width: 17px; height: 17px; accent-color: var(--accent); flex-shrink: 0; margin: 0 !important; cursor: pointer; }
+    .chk-row input[type=text] { flex: 1; padding: 9px 12px !important; font-size: 13px !important; margin-bottom: 0 !important; }
+    .chk-row.done input[type=text] { text-decoration: line-through; color: var(--txt2); }
+    .tk-desc { margin-top: 7px; font-size: 12px; color: var(--txt2); line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; white-space: pre-line; }
+    @media (max-width: 700px) { .fld-row3 { grid-template-columns: 1fr; } .modal-task { padding: 22px 18px; } }
     .tpl-item { background: var(--bg-inp); border: 1px solid var(--brd); border-radius: 10px; padding: 12px 14px; display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
     .tpl-item .tpl-info { flex: 1; min-width: 0; }
     .tpl-item .tpl-name { font-size: 13px; font-weight: 600; }
@@ -411,19 +421,25 @@
 
 <!-- Modal: tarea -->
 <div class="modal-bg" id="taskModalBg">
-  <div class="modal-box modal-wide">
+  <div class="modal-box modal-task">
     <h3 id="taskModalTitle">Nueva tarea</h3>
     <div class="fld"><label>Tarea</label><input type="text" id="tkName" placeholder="¿Qué hay que hacer?" /></div>
+    <div class="fld"><label>Descripción</label><textarea id="tkDesc" rows="4" placeholder="Detalles, contexto, links…"></textarea></div>
+    <div class="fld-row3">
+      <div class="fld"><label>Cliente</label><select id="tkClient"></select></div>
+      <div class="fld"><label>Responsable</label><input type="text" id="tkAssignee" list="tkAssigneeList" placeholder="Nombre" /><datalist id="tkAssigneeList"></datalist></div>
+      <div class="fld"><label>Estado</label>
+        <select id="tkStatus"><option value="abierta">Abierta</option><option value="concluida">Concluida</option></select>
+      </div>
+    </div>
     <div class="fld-row">
       <div class="fld"><label>Fecha solicitada</label><input type="date" id="tkRequested" /></div>
       <div class="fld"><label>Fecha límite</label><input type="date" id="tkDue" /></div>
     </div>
-    <div class="fld-row">
-      <div class="fld"><label>Responsable</label><input type="text" id="tkAssignee" list="tkAssigneeList" placeholder="Nombre" /><datalist id="tkAssigneeList"></datalist></div>
-      <div class="fld"><label>Cliente</label><select id="tkClient"></select></div>
-    </div>
-    <div class="fld"><label>Estado</label>
-      <select id="tkStatus"><option value="abierta">Abierta</option><option value="concluida">Concluida</option></select>
+    <div class="fld">
+      <label>Checklist <span id="tkChkProgress" style="text-transform:none;letter-spacing:0;color:var(--txt3)"></span></label>
+      <div id="tkChecklist"></div>
+      <button class="btn-cancel" onclick="addChecklistItem()" style="margin-top:2px">＋ Agregar ítem</button>
     </div>
     <div class="modal-btns">
       <button class="btn-cancel" onclick="closeTaskModal()">Cancelar</button>
@@ -945,8 +961,10 @@ function taskCardHTML(t) {
           <button class="update-icon-btn" onclick="deleteTask('${t.id}')" title="Eliminar">🗑️</button>
         </div>
       </div>
+      ${t.description ? `<div class="tk-desc">${escapeHtml(t.description)}</div>` : ''}
       <div class="tk-meta">
         <span class="tk-client" style="--cc:${clientColor(t.client)}">${escapeHtml(clientName(t.client))}</span>
+        ${(t.checklist || []).length ? `<span>☑ ${t.checklist.filter(i => i.done).length}/${t.checklist.length}</span>` : ''}
         ${t.assignee ? `<span>👤 ${escapeHtml(t.assignee)}</span>` : ''}
         <span>Solicitada: ${fmtDay(t.requested)}</span>
         <span class="tk-due ${overdue ? 'overdue' : ''}">Límite: ${fmtDay(t.due)}${overdue ? ' ⚠' : ''}</span>
@@ -990,10 +1008,28 @@ function openTaskModal(id) {
   document.getElementById('tkAssignee').value  = t ? t.assignee : '';
   document.getElementById('tkClient').value    = t ? t.client : (fcl || accountKey);
   document.getElementById('tkStatus').value    = t ? t.status : 'abierta';
+  document.getElementById('tkDesc').value      = t ? (t.description || '') : '';
+  tkChecklist = t ? (t.checklist || []).map(i => ({ ...i })) : [];
+  renderChecklist();
   document.getElementById('taskModalBg').style.display = 'flex';
   setTimeout(() => document.getElementById('tkName').focus(), 50);
 }
 function closeTaskModal() { document.getElementById('taskModalBg').style.display = 'none'; editingTaskId = null; }
+
+let tkChecklist = [];
+function renderChecklist(focusLast) {
+  const box = document.getElementById('tkChecklist');
+  box.innerHTML = tkChecklist.map((it, i) => `
+    <div class="chk-row ${it.done ? 'done' : ''}">
+      <input type="checkbox" ${it.done ? 'checked' : ''} onchange="tkChecklist[${i}].done=this.checked;renderChecklist()" />
+      <input type="text" placeholder="Ítem del checklist" value="${escapeHtml(it.text || '')}" oninput="tkChecklist[${i}].text=this.value" onkeydown="if(event.key==='Enter'){event.preventDefault();addChecklistItem();}" />
+      <button class="tpl-rm" onclick="tkChecklist.splice(${i},1);renderChecklist()" title="Quitar">✕</button>
+    </div>`).join('');
+  const done = tkChecklist.filter(i => i.done).length;
+  document.getElementById('tkChkProgress').textContent = tkChecklist.length ? `· ${done}/${tkChecklist.length}` : '';
+  if (focusLast) { const ins = box.querySelectorAll('input[type=text]'); if (ins.length) ins[ins.length - 1].focus(); }
+}
+function addChecklistItem() { tkChecklist.push({ text: '', done: false }); renderChecklist(true); }
 
 async function saveTask() {
   const o = {
@@ -1003,6 +1039,8 @@ async function saveTask() {
     assignee: document.getElementById('tkAssignee').value.trim(),
     client: document.getElementById('tkClient').value,
     status: document.getElementById('tkStatus').value,
+    description: document.getElementById('tkDesc').value.trim(),
+    checklist: tkChecklist.filter(i => (i.text || '').trim()).map(i => ({ text: i.text.trim(), done: !!i.done })),
   };
   if (!o.name) { document.getElementById('tkName').focus(); return; }
   try {
