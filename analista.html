@@ -154,6 +154,48 @@
     .update-client { color: var(--accent); font-weight: 600; margin-right: 6px; }
     @media (max-width: 700px) { .updates-tab-layout { grid-template-columns: 1fr; } }
 
+    /* TAREAS (KANBAN) */
+    .tk-filters select { background: var(--bg-inp); border: 1px solid var(--brd2); color: var(--txt); padding: 8px 12px; border-radius: 8px; font-size: 13px; font-family: inherit; cursor: pointer; }
+    .tk-filters select:focus { outline: none; border-color: var(--accent); }
+    .tk-spacer { flex: 1; }
+    .kanban { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: start; }
+    .kb-col { background: var(--bg-card); border: 1px solid var(--brd); border-radius: 14px; padding: 18px; min-height: 220px; transition: border-color .15s, background .15s; }
+    .kb-col.drag-over { border-color: var(--accent); background: rgba(79,142,247,.05); }
+    .kb-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+    .kb-head h3 { font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+    .kb-dot { width: 8px; height: 8px; border-radius: 50%; }
+    .kb-count { font-size: 12px; color: var(--txt2); background: var(--bg-inp); border: 1px solid var(--brd); padding: 2px 10px; border-radius: 20px; }
+    .kb-list { display: flex; flex-direction: column; gap: 10px; }
+    .tk-card { background: var(--bg-inp); border: 1px solid var(--brd); border-radius: 10px; padding: 13px 14px; cursor: grab; transition: border-color .15s, transform .15s; }
+    .tk-card:hover { border-color: var(--brd2); }
+    .tk-card.dragging { opacity: .4; }
+    .tk-card.done .tk-name { text-decoration: line-through; color: var(--txt2); }
+    .tk-top { display: flex; align-items: flex-start; gap: 10px; }
+    .tk-name { flex: 1; font-size: 13px; font-weight: 500; line-height: 1.4; word-break: break-word; }
+    .tk-actions { display: flex; gap: 2px; flex-shrink: 0; }
+    .tk-meta { display: flex; flex-wrap: wrap; gap: 6px 12px; margin-top: 10px; font-size: 11px; color: var(--txt2); }
+    .tk-client { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; font-size: 11px; padding: 2px 9px; border-radius: 20px; background: color-mix(in srgb, var(--cc) 16%, transparent); color: var(--cc); }
+    .tk-due.overdue { color: #fca5a5; font-weight: 600; }
+    .tk-empty { font-size: 12px; color: var(--txt3); text-align: center; padding: 26px 0; }
+    @media (max-width: 800px) { .kanban { grid-template-columns: 1fr; } }
+
+    .modal-wide { width: 480px; max-width: 94vw; max-height: 90vh; overflow-y: auto; }
+    .fld { margin-bottom: 14px; }
+    .fld label { display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .6px; color: var(--txt2); margin-bottom: 6px; }
+    .fld input, .fld select, .modal-wide .fld input { margin-bottom: 0 !important; }
+    .modal-box select { width: 100%; background: var(--bg-inp); border: 1px solid var(--brd); color: var(--txt); padding: 11px 14px; border-radius: 9px; font-size: 14px; font-family: inherit; }
+    .modal-box select:focus { outline: none; border-color: var(--accent); }
+    .fld-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .tpl-item { background: var(--bg-inp); border: 1px solid var(--brd); border-radius: 10px; padding: 12px 14px; display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+    .tpl-item .tpl-info { flex: 1; min-width: 0; }
+    .tpl-item .tpl-name { font-size: 13px; font-weight: 600; }
+    .tpl-item .tpl-sub { font-size: 11px; color: var(--txt2); margin-top: 2px; }
+    .tpl-row { display: grid; grid-template-columns: 1fr 70px 110px 28px; gap: 8px; margin-bottom: 8px; align-items: center; }
+    .tpl-row input { margin-bottom: 0 !important; padding: 9px 10px !important; font-size: 13px !important; }
+    .tpl-hint { font-size: 11px; color: var(--txt3); margin-bottom: 8px; }
+    .tpl-rm { background: transparent; border: none; color: var(--txt2); cursor: pointer; font-size: 14px; }
+    .tpl-rm:hover { color: var(--red); }
+
     /* BUDGET MODAL */
     .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,.65); display: none; align-items: center; justify-content: center; z-index: 200; }
     .modal-box { background: var(--bg-card); border: 1px solid var(--brd2); border-radius: 16px; padding: 30px; width: 320px; }
@@ -217,6 +259,7 @@
     <div class="tabs">
       <button class="tab-btn on" id="tabBtnDashboard" onclick="switchTab('dashboard')">📊 Dashboard</button>
       <button class="tab-btn" id="tabBtnUpdates" onclick="switchTab('updates')">📝 Actualizaciones</button>
+      <button class="tab-btn" id="tabBtnTasks" onclick="switchTab('tasks')">✅ Tareas</button>
     </div>
 
     <div id="tabDashboard">
@@ -335,8 +378,109 @@
       </div>
     </div>
 
+    <div id="tabTasks" style="display:none">
+      <div class="filters tk-filters">
+        <span class="filter-lbl">Cliente:</span>
+        <select id="tkFClient" onchange="renderTasks()"></select>
+        <span class="filter-lbl" style="margin-left:8px">Responsable:</span>
+        <select id="tkFAssignee" onchange="renderTasks()"></select>
+        <span class="filter-lbl" style="margin-left:8px">Estado:</span>
+        <select id="tkFStatus" onchange="renderTasks()">
+          <option value="all">Todas</option>
+          <option value="abierta">Abiertas</option>
+          <option value="concluida">Concluidas</option>
+        </select>
+        <span class="tk-spacer"></span>
+        <button class="btn-cancel" onclick="openTplManager()">📋 Plantillas</button>
+        <button class="btn-save" onclick="openTaskModal()">＋ Nueva tarea</button>
+      </div>
+      <div class="kanban">
+        <div class="kb-col" id="kbColAbierta" data-status="abierta">
+          <div class="kb-head"><h3><span class="kb-dot" style="background:var(--amber)"></span>Abiertas</h3><span class="kb-count" id="kbCountAbierta">0</span></div>
+          <div class="kb-list" id="kbListAbierta"></div>
+        </div>
+        <div class="kb-col" id="kbColConcluida" data-status="concluida">
+          <div class="kb-head"><h3><span class="kb-dot" style="background:var(--green)"></span>Concluidas</h3><span class="kb-count" id="kbCountConcluida">0</span></div>
+          <div class="kb-list" id="kbListConcluida"></div>
+        </div>
+      </div>
+    </div>
+
   </div><!-- .main -->
 </div><!-- #app -->
+
+<!-- Modal: tarea -->
+<div class="modal-bg" id="taskModalBg">
+  <div class="modal-box modal-wide">
+    <h3 id="taskModalTitle">Nueva tarea</h3>
+    <div class="fld"><label>Tarea</label><input type="text" id="tkName" placeholder="¿Qué hay que hacer?" /></div>
+    <div class="fld-row">
+      <div class="fld"><label>Fecha solicitada</label><input type="date" id="tkRequested" /></div>
+      <div class="fld"><label>Fecha límite</label><input type="date" id="tkDue" /></div>
+    </div>
+    <div class="fld-row">
+      <div class="fld"><label>Responsable</label><input type="text" id="tkAssignee" list="tkAssigneeList" placeholder="Nombre" /><datalist id="tkAssigneeList"></datalist></div>
+      <div class="fld"><label>Cliente</label><select id="tkClient"></select></div>
+    </div>
+    <div class="fld"><label>Estado</label>
+      <select id="tkStatus"><option value="abierta">Abierta</option><option value="concluida">Concluida</option></select>
+    </div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeTaskModal()">Cancelar</button>
+      <button class="btn-save" onclick="saveTask()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: plantillas (lista + editor + aplicar) -->
+<div class="modal-bg" id="tplModalBg">
+  <div class="modal-box modal-wide">
+    <div id="tplListView">
+      <h3>Plantillas de tareas</h3>
+      <p class="tpl-hint">Un grupo de tareas reutilizable. Al aplicarlo a un cliente se crean todas sus tareas automáticamente.</p>
+      <div id="tplList"></div>
+      <div class="modal-btns" style="margin-top:14px">
+        <button class="btn-cancel" onclick="closeTplModal()">Cerrar</button>
+        <button class="btn-save" onclick="openTplEditor()">＋ Nueva plantilla</button>
+      </div>
+    </div>
+    <div id="tplEditView" style="display:none">
+      <h3 id="tplEditTitle">Nueva plantilla</h3>
+      <div class="fld"><label>Nombre de la plantilla</label><input type="text" id="tplName" placeholder='Ej: Nuevo Cliente' /></div>
+      <div class="fld">
+        <label>Tareas</label>
+        <p class="tpl-hint">Cada tarea: descripción · días para el límite · responsable (opcional)</p>
+        <div id="tplItems"></div>
+        <button class="btn-cancel" onclick="addTplItem()" style="margin-top:4px">＋ Agregar tarea</button>
+      </div>
+      <div class="modal-btns">
+        <button class="btn-cancel" onclick="showTplList()">Volver</button>
+        <button class="btn-save" onclick="saveTpl()">Guardar plantilla</button>
+      </div>
+    </div>
+    <div id="tplApplyView" style="display:none">
+      <h3 id="tplApplyTitle">Aplicar plantilla</h3>
+      <p class="tpl-hint" id="tplApplyInfo"></p>
+      <div class="fld"><label>Cliente</label><select id="tplApplyClient"></select></div>
+      <div class="modal-btns">
+        <button class="btn-cancel" onclick="showTplList()">Volver</button>
+        <button class="btn-save" onclick="applyTpl()">Crear tareas</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: confirmación genérica -->
+<div class="modal-bg" id="genConfirmBg">
+  <div class="modal-box">
+    <h3 id="genConfirmTitle">Confirmar</h3>
+    <p id="genConfirmMsg" style="color:var(--txt2); font-size:13px; margin-bottom:18px; margin-top:-8px;"></p>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeGenConfirm()">Cancelar</button>
+      <button class="btn-save" style="background:var(--red)" onclick="runGenConfirm()">Eliminar</button>
+    </div>
+  </div>
+</div>
 
 <script>
 // ─── CLIENT CONFIG ──────────────────────────────────────────────────────────
@@ -723,10 +867,258 @@ document.getElementById('updComment').addEventListener('keydown', e => { if (e.k
 function switchTab(tab) {
   document.getElementById('tabDashboard').style.display = tab === 'dashboard' ? 'block' : 'none';
   document.getElementById('tabUpdates').style.display   = tab === 'updates'   ? 'block' : 'none';
+  document.getElementById('tabTasks').style.display     = tab === 'tasks'     ? 'block' : 'none';
   document.getElementById('tabBtnDashboard').classList.toggle('on', tab === 'dashboard');
   document.getElementById('tabBtnUpdates').classList.toggle('on', tab === 'updates');
+  document.getElementById('tabBtnTasks').classList.toggle('on', tab === 'tasks');
   if (tab === 'updates') buildUpdatesClientList();
+  if (tab === 'tasks') loadTasks();
 }
+
+// ─── TAREAS (KANBAN) + PLANTILLAS ────────────────────────────────────────────
+let tasks = [], templates = [], editingTaskId = null, editingTplId = null, applyingTplId = null;
+let tplDraft = [], genConfirmCb = null;
+
+const todayStr = () => new Date().toISOString().slice(0, 10);
+const addDays  = n => { const d = new Date(); d.setDate(d.getDate() + n); return d.toISOString().slice(0, 10); };
+const clientName  = k => (CLIENTS[k] && CLIENTS[k].name) || k || '—';
+const clientColor = k => (CLIENTS[k] && CLIENTS[k].color) || '#8292b5';
+const fmtDay = s => s ? fmtDateEs(s) : '—';
+
+async function tkApi(kind, method, body, qs) {
+  const r = await fetch('/api/tasks?kind=' + kind + (qs || ''), {
+    method,
+    headers: body ? { 'Content-Type': 'application/json' } : undefined,
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(j.error || r.status);
+  return j;
+}
+
+async function loadTasks() {
+  try {
+    const [t, p] = await Promise.all([tkApi('tasks', 'GET'), tkApi('templates', 'GET')]);
+    tasks = t.items || []; templates = p.items || [];
+  } catch (e) { console.error('Error cargando tareas:', e); }
+  renderTasks();
+}
+
+function fillSelect(sel, options, keep) {
+  sel.innerHTML = options.map(([v, l]) => `<option value="${escapeHtml(v)}">${escapeHtml(l)}</option>`).join('');
+  if (keep && options.some(([v]) => v === keep)) sel.value = keep;
+}
+
+function renderTasks() {
+  const fc = document.getElementById('tkFClient'), fa = document.getElementById('tkFAssignee');
+  fillSelect(fc, [['', 'Todos'], ...Object.entries(CLIENTS).map(([k, c]) => [k, c.name])], fc.value);
+  const people = [...new Set(tasks.map(t => t.assignee).filter(Boolean))].sort((a, b) => a.localeCompare(b));
+  fillSelect(fa, [['', 'Todos'], ...people.map(p => [p, p])], fa.value);
+  document.getElementById('tkAssigneeList').innerHTML = people.map(p => `<option value="${escapeHtml(p)}">`).join('');
+
+  const st = document.getElementById('tkFStatus').value;
+  const list = tasks
+    .filter(t => (!fc.value || t.client === fc.value) && (!fa.value || t.assignee === fa.value) && (st === 'all' || t.status === st))
+    .sort((a, b) => (a.due || '9999').localeCompare(b.due || '9999'));
+
+  ['abierta', 'concluida'].forEach(s => {
+    const items = list.filter(t => t.status === s);
+    const cap = s === 'abierta' ? 'Abierta' : 'Concluida';
+    document.getElementById('kbCount' + cap).textContent = items.length;
+    document.getElementById('kbList' + cap).innerHTML = items.length
+      ? items.map(taskCardHTML).join('')
+      : '<div class="tk-empty">Sin tareas</div>';
+  });
+  bindKanbanDnD();
+}
+
+function taskCardHTML(t) {
+  const done = t.status === 'concluida';
+  const overdue = !done && t.due && t.due < todayStr();
+  return `
+    <div class="tk-card ${done ? 'done' : ''}" draggable="true" data-id="${t.id}">
+      <div class="tk-top">
+        <div class="tk-name">${escapeHtml(t.name)}</div>
+        <div class="tk-actions">
+          <button class="update-icon-btn" onclick="toggleTask('${t.id}')" title="${done ? 'Reabrir' : 'Marcar como concluida'}">${done ? '↩️' : '✅'}</button>
+          <button class="update-icon-btn" onclick="openTaskModal('${t.id}')" title="Editar">✏️</button>
+          <button class="update-icon-btn" onclick="deleteTask('${t.id}')" title="Eliminar">🗑️</button>
+        </div>
+      </div>
+      <div class="tk-meta">
+        <span class="tk-client" style="--cc:${clientColor(t.client)}">${escapeHtml(clientName(t.client))}</span>
+        ${t.assignee ? `<span>👤 ${escapeHtml(t.assignee)}</span>` : ''}
+        <span>Solicitada: ${fmtDay(t.requested)}</span>
+        <span class="tk-due ${overdue ? 'overdue' : ''}">Límite: ${fmtDay(t.due)}${overdue ? ' ⚠' : ''}</span>
+      </div>
+    </div>`;
+}
+
+function bindKanbanDnD() {
+  document.querySelectorAll('.tk-card').forEach(c => {
+    c.addEventListener('dragstart', e => { e.dataTransfer.setData('text/plain', c.dataset.id); c.classList.add('dragging'); });
+    c.addEventListener('dragend', () => c.classList.remove('dragging'));
+  });
+  document.querySelectorAll('.kb-col').forEach(col => {
+    col.ondragover  = e => { e.preventDefault(); col.classList.add('drag-over'); };
+    col.ondragleave = () => col.classList.remove('drag-over');
+    col.ondrop = e => {
+      e.preventDefault(); col.classList.remove('drag-over');
+      const id = e.dataTransfer.getData('text/plain');
+      const t = tasks.find(x => x.id === id);
+      if (t && t.status !== col.dataset.status) setTaskStatus(t, col.dataset.status);
+    };
+  });
+}
+
+async function setTaskStatus(t, status) {
+  try { await tkApi('tasks', 'PUT', { ...t, status }); await loadTasks(); }
+  catch (e) { alert('No se pudo actualizar la tarea: ' + e.message); }
+}
+const toggleTask = id => { const t = tasks.find(x => x.id === id); if (t) setTaskStatus(t, t.status === 'concluida' ? 'abierta' : 'concluida'); };
+
+// ── Modal de tarea ──
+function openTaskModal(id) {
+  const t = id ? tasks.find(x => x.id === id) : null;
+  editingTaskId = t ? t.id : null;
+  fillSelect(document.getElementById('tkClient'), Object.entries(CLIENTS).map(([k, c]) => [k, c.name]));
+  const fcl = document.getElementById('tkFClient').value;
+  document.getElementById('taskModalTitle').textContent = t ? 'Editar tarea' : 'Nueva tarea';
+  document.getElementById('tkName').value      = t ? t.name : '';
+  document.getElementById('tkRequested').value = t ? t.requested : todayStr();
+  document.getElementById('tkDue').value       = t ? t.due : '';
+  document.getElementById('tkAssignee').value  = t ? t.assignee : '';
+  document.getElementById('tkClient').value    = t ? t.client : (fcl || accountKey);
+  document.getElementById('tkStatus').value    = t ? t.status : 'abierta';
+  document.getElementById('taskModalBg').style.display = 'flex';
+  setTimeout(() => document.getElementById('tkName').focus(), 50);
+}
+function closeTaskModal() { document.getElementById('taskModalBg').style.display = 'none'; editingTaskId = null; }
+
+async function saveTask() {
+  const o = {
+    name: document.getElementById('tkName').value.trim(),
+    requested: document.getElementById('tkRequested').value,
+    due: document.getElementById('tkDue').value,
+    assignee: document.getElementById('tkAssignee').value.trim(),
+    client: document.getElementById('tkClient').value,
+    status: document.getElementById('tkStatus').value,
+  };
+  if (!o.name) { document.getElementById('tkName').focus(); return; }
+  try {
+    if (editingTaskId) await tkApi('tasks', 'PUT', { ...o, id: editingTaskId });
+    else await tkApi('tasks', 'POST', o);
+    closeTaskModal();
+    await loadTasks();
+  } catch (e) { alert('No se pudo guardar la tarea: ' + e.message); }
+}
+
+// ── Confirmación genérica ──
+function askConfirm(title, msg, cb) {
+  genConfirmCb = cb;
+  document.getElementById('genConfirmTitle').textContent = title;
+  document.getElementById('genConfirmMsg').textContent = msg;
+  document.getElementById('genConfirmBg').style.display = 'flex';
+}
+function closeGenConfirm() { document.getElementById('genConfirmBg').style.display = 'none'; genConfirmCb = null; }
+async function runGenConfirm() { const cb = genConfirmCb; closeGenConfirm(); if (cb) await cb(); }
+
+function deleteTask(id) {
+  askConfirm('Eliminar tarea', '¿Seguro que quieres eliminar esta tarea? Esta acción no se puede deshacer.', async () => {
+    try { await tkApi('tasks', 'DELETE', null, '&id=' + encodeURIComponent(id)); await loadTasks(); }
+    catch (e) { alert('No se pudo eliminar: ' + e.message); }
+  });
+}
+
+// ── Plantillas ──
+function openTplManager() { renderTplList(); showTplList(); document.getElementById('tplModalBg').style.display = 'flex'; }
+function closeTplModal() { document.getElementById('tplModalBg').style.display = 'none'; }
+function showTplView(v) {
+  ['tplListView', 'tplEditView', 'tplApplyView'].forEach(id => document.getElementById(id).style.display = id === v ? 'block' : 'none');
+}
+function showTplList() { renderTplList(); showTplView('tplListView'); }
+
+function renderTplList() {
+  document.getElementById('tplList').innerHTML = templates.length ? templates.map(p => `
+    <div class="tpl-item">
+      <div class="tpl-info"><div class="tpl-name">${escapeHtml(p.name)}</div><div class="tpl-sub">${p.items.length} tarea${p.items.length === 1 ? '' : 's'}</div></div>
+      <button class="btn-save" style="padding:7px 12px;font-size:12px" onclick="openTplApply('${p.id}')">Aplicar</button>
+      <button class="update-icon-btn" onclick="openTplEditor('${p.id}')" title="Editar">✏️</button>
+      <button class="update-icon-btn" onclick="deleteTpl('${p.id}')" title="Eliminar">🗑️</button>
+    </div>`).join('') : '<div class="tk-empty">Aún no hay plantillas. Crea la primera con “Nueva plantilla”.</div>';
+}
+
+function renderTplItems() {
+  document.getElementById('tplItems').innerHTML = tplDraft.map((it, i) => `
+    <div class="tpl-row">
+      <input type="text" placeholder="Descripción de la tarea" value="${escapeHtml(it.name)}" oninput="tplDraft[${i}].name=this.value" />
+      <input type="number" min="0" placeholder="Días" value="${it.days ?? ''}" oninput="tplDraft[${i}].days=this.value" title="Días para la fecha límite" />
+      <input type="text" placeholder="Responsable" value="${escapeHtml(it.assignee || '')}" oninput="tplDraft[${i}].assignee=this.value" />
+      <button class="tpl-rm" onclick="tplDraft.splice(${i},1);renderTplItems()" title="Quitar">✕</button>
+    </div>`).join('');
+}
+function addTplItem() { tplDraft.push({ name: '', days: 7, assignee: '' }); renderTplItems(); }
+
+function openTplEditor(id) {
+  const p = id ? templates.find(x => x.id === id) : null;
+  editingTplId = p ? p.id : null;
+  tplDraft = p ? p.items.map(i => ({ ...i })) : [{ name: '', days: 7, assignee: '' }];
+  document.getElementById('tplEditTitle').textContent = p ? 'Editar plantilla' : 'Nueva plantilla';
+  document.getElementById('tplName').value = p ? p.name : '';
+  renderTplItems();
+  showTplView('tplEditView');
+}
+
+async function saveTpl() {
+  const name = document.getElementById('tplName').value.trim();
+  const items = tplDraft.filter(i => i.name.trim()).map(i => ({ name: i.name.trim(), days: i.days === '' || i.days == null ? '' : Number(i.days), assignee: (i.assignee || '').trim() }));
+  if (!name) { document.getElementById('tplName').focus(); return; }
+  if (!items.length) { alert('Agrega al menos una tarea a la plantilla.'); return; }
+  try {
+    if (editingTplId) await tkApi('templates', 'PUT', { id: editingTplId, name, items });
+    else await tkApi('templates', 'POST', { name, items });
+    await loadTasks();
+    showTplList();
+  } catch (e) { alert('No se pudo guardar la plantilla: ' + e.message); }
+}
+
+function deleteTpl(id) {
+  askConfirm('Eliminar plantilla', 'Las tareas ya creadas a partir de ella no se borran. ¿Eliminar la plantilla?', async () => {
+    try { await tkApi('templates', 'DELETE', null, '&id=' + encodeURIComponent(id)); await loadTasks(); renderTplList(); }
+    catch (e) { alert('No se pudo eliminar: ' + e.message); }
+  });
+}
+
+function openTplApply(id) {
+  const p = templates.find(x => x.id === id);
+  if (!p) return;
+  applyingTplId = id;
+  document.getElementById('tplApplyTitle').textContent = 'Aplicar “' + p.name + '”';
+  document.getElementById('tplApplyInfo').textContent = 'Se crearán ' + p.items.length + ' tarea' + (p.items.length === 1 ? '' : 's') + ' abiertas para el cliente elegido.';
+  fillSelect(document.getElementById('tplApplyClient'), Object.entries(CLIENTS).map(([k, c]) => [k, c.name]));
+  document.getElementById('tplApplyClient').value = document.getElementById('tkFClient').value || accountKey;
+  showTplView('tplApplyView');
+}
+
+async function applyTpl() {
+  const p = templates.find(x => x.id === applyingTplId);
+  const client = document.getElementById('tplApplyClient').value;
+  if (!p || !client) return;
+  const batch = p.items.map(i => ({
+    name: i.name, requested: todayStr(), due: i.days === '' || i.days == null ? '' : addDays(Number(i.days)),
+    assignee: i.assignee || '', client, status: 'abierta',
+  }));
+  try {
+    await tkApi('tasks', 'POST', { tasks: batch });
+    closeTplModal();
+    document.getElementById('tkFClient').value = client;
+    await loadTasks();
+  } catch (e) { alert('No se pudieron crear las tareas: ' + e.message); }
+}
+
+['taskModalBg', 'tplModalBg', 'genConfirmBg'].forEach(id => {
+  document.getElementById(id).addEventListener('click', e => { if (e.target.id === id) document.getElementById(id).style.display = 'none'; });
+});
 
 function buildUpdatesClientList() {
   const box = document.getElementById('updatesClientList');
