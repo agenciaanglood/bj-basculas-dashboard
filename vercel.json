@@ -14,6 +14,7 @@
     { "source": "/drsaab",        "destination": "/dashboard.html" },
     { "source": "/drcesar",       "destination": "/dashboard.html" },
     { "source": "/illysium",      "destination": "/dashboard.html" },
+    { "source": "/tecnoblinds",   "destination": "/dashboard.html" },
     { "source": "/dashboards",    "destination": "/dashboards.html" },
     { "source": "/analista",      "destination": "/analista.html" },
     { "source": "/api/(.*)",      "destination": "/api/$1" }
