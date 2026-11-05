@@ -877,8 +877,10 @@ let genConfirmCb = null;
 
 const todayStr = () => new Date().toISOString().slice(0, 10);
 const addDays  = n => { const d = new Date(); d.setDate(d.getDate() + n); return d.toISOString().slice(0, 10); };
-const clientName  = k => (CLIENTS[k] && CLIENTS[k].name) || k || '—';
-const clientColor = k => (CLIENTS[k] && CLIENTS[k].color) || '#8292b5';
+// Tareas también acepta "Anglood" (tareas internas), aunque no sea un cliente del dashboard
+const TASK_CLIENTS = { anglood: { name: 'Anglood (interno)', color: '#64748b' }, ...CLIENTS };
+const clientName  = k => (TASK_CLIENTS[k] && TASK_CLIENTS[k].name) || k || '—';
+const clientColor = k => (TASK_CLIENTS[k] && TASK_CLIENTS[k].color) || '#8292b5';
 const fmtDay = s => s ? fmtDateEs(s) : '—';
 
 async function tkApi(kind, method, body, qs) {
@@ -907,7 +909,7 @@ function fillSelect(sel, options, keep) {
 
 function renderTasks() {
   const fc = document.getElementById('tkFClient'), fa = document.getElementById('tkFAssignee');
-  fillSelect(fc, [['', 'Todos'], ...Object.entries(CLIENTS).map(([k, c]) => [k, c.name])], fc.value);
+  fillSelect(fc, [['', 'Todos'], ...Object.entries(TASK_CLIENTS).map(([k, c]) => [k, c.name])], fc.value);
   const people = [...new Set(tasks.map(t => t.assignee).filter(Boolean))].sort((a, b) => a.localeCompare(b));
   fillSelect(fa, [['', 'Todos'], ...people.map(p => [p, p])], fa.value);
   document.getElementById('tkAssigneeList').innerHTML = people.map(p => `<option value="${escapeHtml(p)}">`).join('');
@@ -982,7 +984,7 @@ function openTaskModal(id, modelId) {
   editingModelId = null;
   setTaskMode('task');
   populateModelSel(modelId);
-  fillSelect(document.getElementById('tkClient'), Object.entries(CLIENTS).map(([k, c]) => [k, c.name]));
+  fillSelect(document.getElementById('tkClient'), Object.entries(TASK_CLIENTS).map(([k, c]) => [k, c.name]));
   const fcl = document.getElementById('tkFClient').value;
   document.getElementById('taskModalTitle').textContent = t ? 'Editar tarea' : 'Nueva tarea';
   document.getElementById('tkName').value      = t ? t.name : '';
